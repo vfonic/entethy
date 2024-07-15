@@ -2,13 +2,12 @@ import { LocalStorage } from "@raycast/api";
 
 export const SERVICES_KEY = "services";
 export const APPS_KEY = "apps";
-export const OPT_SERVICES_KEY = "otpServices";
+export const OTP_SERVICES_KEY = "otpServices";
 export const REQUEST_ID = "requestId";
 export const DEVICE_ID = "deviceId";
 export const SECRET_SEED = "secretSeed";
-export const AUTHY_ID = "authyId";
+export const ENTE_EMAIL = "enteEmail";
 export const RECENTLY_USED = "recentlyUsed";
-export const READ_NOTIFICATION = "readNotification";
 
 export async function checkIfCached(key: string): Promise<boolean> {
   return (await LocalStorage.getItem(key)) != undefined;

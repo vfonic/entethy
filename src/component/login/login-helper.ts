@@ -1,12 +1,13 @@
 import { environment, getPreferenceValues, showToast, Toast } from "@raycast/api";
+import { encode } from "hi-base32";
 import {
   addToCache,
   APPS_KEY,
-  AUTHY_ID,
   checkIfCached,
   DEVICE_ID,
+  ENTE_EMAIL,
   getFromCache,
-  OPT_SERVICES_KEY,
+  OTP_SERVICES_KEY,
   removeFromCache,
   REQUEST_ID,
   SECRET_SEED,
@@ -20,7 +21,6 @@ import {
   requestRegistration,
 } from "../../client/authy-client";
 import { generateTOTP } from "../../util/totp";
-import { encode } from "hi-base32";
 import { mapOtpServices } from "../../util/utils";
 
 export const WELCOME_MESSAGE = `
@@ -29,7 +29,7 @@ To continue, approve request at any other device and press ⏎ to continue.
 
 <img src="file://${environment.assetsPath}/approve.png" height="200"  alt=""/>
 
-Or press ⌘ + ⏎ to start this process from scratch 
+Or press ⌘ + ⏎ to start this process from scratch
 `;
 
 export interface Service {
@@ -44,7 +44,7 @@ export interface Service {
   type: "authy" | "service";
 }
 
-const { authyId } = getPreferenceValues<{ authyId: number }>();
+const { enteEmail } = getPreferenceValues<{ enteEmail: number }>();
 
 export async function requestLoginIfNeeded() {
   const toast = await showToast({
@@ -55,7 +55,7 @@ export async function requestLoginIfNeeded() {
   try {
     const requestExists = await checkIfCached(REQUEST_ID);
     if (!requestExists) {
-      const registration = await requestRegistration(authyId);
+      const registration = await requestRegistration(enteEmail);
       await addToCache(REQUEST_ID, registration.request_id);
     }
   } catch (error) {
@@ -94,7 +94,7 @@ export async function login(setLogin: (step: boolean) => void) {
     }
 
     await getOtpServices(device.device.id, device.device.secret_seed, loginToast);
-    await addToCache(AUTHY_ID, authyId);
+    await addToCache(ENTE_EMAIL, enteEmail);
 
     await loginToast.hide();
 
@@ -128,7 +128,7 @@ async function checkForApproval(requestId: string, toast: Toast) {
   toast.style = Toast.Style.Animated;
   await toast.show();
 
-  const registrationStatus = await checkRequestStatus(authyId, requestId);
+  const registrationStatus = await checkRequestStatus(enteEmail, requestId);
 
   if (registrationStatus.status == "rejected") {
     await toast.hide();
@@ -151,7 +151,7 @@ async function checkForApproval(requestId: string, toast: Toast) {
     return;
   }
 
-  const device = await completeRegistration(authyId, registrationStatus.pin);
+  const device = await completeRegistration(enteEmail, registrationStatus.pin);
   await addToCache(DEVICE_ID, device.device.id);
   await addToCache(SECRET_SEED, device.device.secret_seed);
   await toast.hide();
@@ -172,15 +172,15 @@ export async function getOtpServices(deviceId: number, secretSeed: string, toast
   ];
 
   // get authy apps
-  const authyAppResponse = await getAuthyApps(authyId, deviceId, otps);
+  const authyAppResponse = await getAuthyApps(enteEmail, deviceId, otps);
   // get 3rd party services
-  const authyServicesResponse = await getServices(authyId, deviceId, otps);
+  const authyServicesResponse = await getServices(enteEmail, deviceId, otps);
   // map opt Services to common format
   const optServices = mapOtpServices(authyServicesResponse.authenticator_tokens, authyAppResponse.apps);
 
   await addToCache(SERVICES_KEY, authyServicesResponse);
   await addToCache(APPS_KEY, authyAppResponse);
-  await addToCache(OPT_SERVICES_KEY, optServices);
+  await addToCache(OTP_SERVICES_KEY, optServices);
 
   return optServices;
 }
@@ -191,5 +191,5 @@ export async function logout() {
   await removeFromCache(SERVICES_KEY);
   await removeFromCache(APPS_KEY);
   await removeFromCache(REQUEST_ID);
-  await removeFromCache(OPT_SERVICES_KEY);
+  await removeFromCache(OTP_SERVICES_KEY);
 }

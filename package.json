@@ -1,15 +1,11 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "authy",
-  "title": "Authy - Twilio App",
-  "description": "Search, sync and use your Twilio’s Authy 2fa tokens with Raycast",
+  "name": "ente",
+  "title": "Ente Auth",
+  "description": "The Raycast extension for Ente Auth provides quick access to two-factor authentication (2FA) codes. This extension allows users to retrieve and copy 2FA codes directly from Raycast, enhancing security and convenience for account logins.",
   "icon": "command-icon.png",
-  "author": "guga4ka",
-  "contributors": [
-    "gdsmith",
-    "pernielsentikaer",
-    "litomore"
-  ],
+  "author": "Raycaster-55",
+  "contributors": [],
   "categories": [
     "Security"
   ],
@@ -18,27 +14,25 @@
     {
       "name": "search-otp",
       "title": "Search Token",
-      "subtitle": "Authy - Twilio app",
-      "description": "Search OTP for synced Twilio’s Authy Apps and 3rd party services",
+      "subtitle": "Ente Auth",
+      "description": "Search OTP token for synced apps",
       "mode": "view"
     }
   ],
   "preferences": [
     {
       "required": true,
-      "name": "authyId",
-      "title": "Authy Id",
+      "name": "enteEmail",
+      "title": "Ente Auth email",
       "type": "textfield",
-      "description": "Your Authy Id",
-      "placeholder": "Enter your Authy Id"
+      "description": "Ente Auth email"
     },
     {
       "required": true,
-      "name": "authyPassword",
-      "title": "Authy Backup Password",
+      "name": "entePassword",
+      "title": "Ente Auth password",
       "type": "password",
-      "description": "Your Authy Backup Password",
-      "placeholder": "Enter your Authy backup password"
+      "description": "Ente Auth password"
     },
     {
       "required": false,

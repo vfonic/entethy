@@ -1,22 +1,22 @@
-import { URLSearchParams } from "url";
 import crypto from "crypto";
-import os from "os";
 import fetch from "node-fetch";
+import os from "os";
+import { URLSearchParams } from "url";
 import { ApiError, AppsResponse, Device, Registration, RegistrationStatus, ServicesResponse } from "./dto";
 
-const baseUrl = "https://api.authy.com/json";
+const baseUrl = "https://auth.ente.com";
 // extracted from chrome plugin
 const API_KEY = "37b312a3d682b823c439522e1fd31c82";
 const SIGNATURE = crypto.randomBytes(32).toString("hex");
 
-export async function requestRegistration(authyId: number): Promise<Registration> {
+export async function requestRegistration(enteEmail: number): Promise<Registration> {
   const formData = new URLSearchParams();
   formData.set("api_key", API_KEY);
   formData.set("via", "push");
-  formData.set("device_app", "Raycast Authy Extension");
-  formData.set("device_name", `Raycast Authy Extension on ${os.hostname()}`);
+  formData.set("device_app", "Raycast Ente Extension");
+  formData.set("device_name", `Raycast Ente Extension on ${os.hostname()}`);
   formData.set("signature", SIGNATURE);
-  const resp = await fetch(`${baseUrl}/users/${authyId}/devices/registration/start`, {
+  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/registration/start`, {
     method: "POST",
     body: formData,
   });
@@ -28,12 +28,12 @@ export async function requestRegistration(authyId: number): Promise<Registration
   }
 }
 
-export async function checkRequestStatus(authyId: number, requestId: string): Promise<RegistrationStatus> {
+export async function checkRequestStatus(enteEmail: number, requestId: string): Promise<RegistrationStatus> {
   const formData = new URLSearchParams();
   formData.set("api_key", API_KEY);
   formData.set("signature", SIGNATURE);
   formData.set("locale", "en-GB");
-  const resp = await fetch(`${baseUrl}/users/${authyId}/devices/registration/${requestId}/status?` + formData, {
+  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/registration/${requestId}/status?` + formData, {
     method: "GET",
   });
   if (resp.ok) {
@@ -44,14 +44,14 @@ export async function checkRequestStatus(authyId: number, requestId: string): Pr
   }
 }
 
-export async function completeRegistration(authyId: number, pin: string): Promise<Device> {
+export async function completeRegistration(enteEmail: number, pin: string): Promise<Device> {
   const formData = new URLSearchParams();
   formData.set("pin", pin);
   formData.set("api_key", API_KEY);
   formData.set("signature", SIGNATURE);
   formData.set("device_app", "Raycast Authy Extension");
   formData.set("device_name", `Raycast Authy Extension on ${os.hostname()}`);
-  const resp = await fetch(`${baseUrl}/users/${authyId}/devices/registration/complete`, {
+  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/registration/complete`, {
     method: "POST",
     body: formData,
   });
@@ -62,7 +62,7 @@ export async function completeRegistration(authyId: number, pin: string): Promis
   }
 }
 
-export async function getAuthyApps(authyId: number, deviceId: number, otps: string[]): Promise<AppsResponse> {
+export async function getAuthyApps(enteEmail: number, deviceId: number, otps: string[]): Promise<AppsResponse> {
   const formData = new URLSearchParams();
   formData.set("api_key", API_KEY);
   formData.set("signature", SIGNATURE);
@@ -71,7 +71,7 @@ export async function getAuthyApps(authyId: number, deviceId: number, otps: stri
   formData.set("otp1", `${otps[0]}`);
   formData.set("otp2", `${otps[1]}`);
   formData.set("otp3", `${otps[2]}`);
-  const resp = await fetch(`${baseUrl}/users/${authyId}/devices/${deviceId}/apps/sync`, {
+  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/${deviceId}/apps/sync`, {
     method: "POST",
     body: formData,
   });
@@ -82,7 +82,7 @@ export async function getAuthyApps(authyId: number, deviceId: number, otps: stri
   }
 }
 
-export async function getServices(authyId: number, deviceId: number, otps: string[]): Promise<ServicesResponse> {
+export async function getServices(enteEmail: number, deviceId: number, otps: string[]): Promise<ServicesResponse> {
   const formData = new URLSearchParams();
   formData.set("api_key", API_KEY);
   formData.set("signature", SIGNATURE);
@@ -91,7 +91,7 @@ export async function getServices(authyId: number, deviceId: number, otps: strin
   formData.set("otp1", `${otps[0]}`);
   formData.set("otp2", `${otps[1]}`);
   formData.set("otp3", `${otps[2]}`);
-  const resp = await fetch(`${baseUrl}/users/${authyId}/authenticator_tokens?` + formData);
+  const resp = await fetch(`${baseUrl}/users/${enteEmail}/authenticator_tokens?` + formData);
   if (resp.ok) {
     return (await resp.json()) as ServicesResponse;
   } else {

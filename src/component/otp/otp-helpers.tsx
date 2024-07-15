@@ -14,13 +14,13 @@ import {
   checkIfCached,
   DEVICE_ID,
   getFromCache,
-  OPT_SERVICES_KEY,
+  OTP_SERVICES_KEY,
   RECENTLY_USED,
   SECRET_SEED,
 } from "../../cache";
-import { getOtpServices, logout, Service } from "../login/login-helper";
 import { compareByDate, compareByName, toId } from "../../util/compare";
 import Export from "../export/Export";
+import { getOtpServices, logout, Service } from "../login/login-helper";
 
 const {
   excludeNames: excludeNamesCsv = "",
@@ -50,7 +50,7 @@ export type setItemsFunction = (
  * Loads OTP services to show, sort and exclude values from extension properties
  */
 export async function loadData(setItems: setItemsFunction): Promise<void> {
-  const otpServices = await sortServices(await getFromCache(OPT_SERVICES_KEY));
+  const otpServices = await sortServices(await getFromCache(OTP_SERVICES_KEY));
 
   setItems({
     otpList: otpServices,
