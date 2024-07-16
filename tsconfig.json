@@ -7,7 +7,7 @@
     "lib": ["es2020"],
     "module": "commonjs",
     "target": "es2020",
-    "strict": true,
+    "strict": false,
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

@@ -22,7 +22,7 @@ export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
   }
 }
 
-export async function checkRequestStatus(enteEmail: number, requestId: string): Promise<RegistrationStatus> {
+export async function checkRequestStatus(enteEmail: string, requestId: string): Promise<RegistrationStatus> {
   const formData = new URLSearchParams()
   formData.set("api_key", API_KEY)
   formData.set("signature", SIGNATURE)
@@ -38,7 +38,7 @@ export async function checkRequestStatus(enteEmail: number, requestId: string): 
   }
 }
 
-export async function completeRegistration(enteEmail: number, pin: string): Promise<Device> {
+export async function completeRegistration(enteEmail: string, pin: string): Promise<Device> {
   const formData = new URLSearchParams()
   formData.set("pin", pin)
   formData.set("api_key", API_KEY)
@@ -56,7 +56,7 @@ export async function completeRegistration(enteEmail: number, pin: string): Prom
   }
 }
 
-export async function getAuthyApps(enteEmail: number, deviceId: number, otps: string[]): Promise<AppsResponse> {
+export async function getAuthyApps(enteEmail: string, deviceId: number, otps: string[]): Promise<AppsResponse> {
   const formData = new URLSearchParams()
   formData.set("api_key", API_KEY)
   formData.set("signature", SIGNATURE)
@@ -76,7 +76,7 @@ export async function getAuthyApps(enteEmail: number, deviceId: number, otps: st
   }
 }
 
-export async function getServices(enteEmail: number, deviceId: number, otps: string[]): Promise<ServicesResponse> {
+export async function getServices(enteEmail: string, deviceId: number, otps: string[]): Promise<ServicesResponse> {
   const formData = new URLSearchParams()
   formData.set("api_key", API_KEY)
   formData.set("signature", SIGNATURE)

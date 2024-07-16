@@ -12,10 +12,13 @@ import {
   SECRET_SEED,
   SERVICES_KEY,
   SRP_ATTRIBUTES,
+  USER,
 } from "../../cache"
 import { checkRequestStatus, completeRegistration, getAuthyApps, getServices, getSRPAttributes } from "../../client/ente-auth-client"
 import { generateTOTP } from "../../util/totp"
 import { mapOtpServices } from "../../util/utils"
+import * as libsodium from "./libsodium"
+import { getKeyAttributes, useMasterPassword } from "./verifyMasterPassword"
 
 export interface Service {
   id: string
@@ -29,16 +32,28 @@ export interface Service {
   type: "authy" | "service"
 }
 
-const { enteEmail } = getPreferenceValues<{ enteEmail: string }>()
+const { enteEmail, entePassword } = getPreferenceValues<{ enteEmail: string; entePassword: string }>()
 
 // SRP - Secure Remote Password
 export async function getSrpData() {
   try {
     const hasSrpData = await checkIfCached(SRP_ATTRIBUTES)
+    let srpAttributes = null
     if (!hasSrpData) {
-      const srpAttributes = await getSRPAttributes(enteEmail)
-      await addToCache(SRP_ATTRIBUTES, JSON.stringify(srpAttributes))
+      await addToCache(USER, { email: enteEmail })
+      srpAttributes = await getSRPAttributes(enteEmail)
+      await addToCache(SRP_ATTRIBUTES, srpAttributes)
+    } else {
+      srpAttributes = await getFromCache(SRP_ATTRIBUTES)
     }
+
+      const kek = await libsodium.deriveKey(entePassword, srpAttributes.kekSalt, srpAttributes.opsLimit, srpAttributes.memLimit)
+
+      const keyAttributes = await getKeyAttributes(kek, srpAttributes)
+    if (!keyAttributes) throw new Error("KeyAttributes not found")
+
+      const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
+      useMasterPassword(key, kek, keyAttributes, entePassword)
   } catch (error) {
     if (error instanceof Error) {
       await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message })
