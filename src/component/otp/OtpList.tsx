@@ -1,26 +1,26 @@
-import { ActionPanel, Icon, List } from "@raycast/api";
-import { useEffect, useState } from "react";
-import OtpListItems from "./OtpListItems";
-import { Service } from "../login/login-helper";
-import { checkError, commonActions, loadData, refresh } from "./otp-helpers";
+import { ActionPanel, Icon, List } from "@raycast/api"
+import { useEffect, useState } from "react"
+import { Service } from "../login/login-helper"
+import OtpListItems from "./OtpListItems"
+import { checkError, commonActions, loadData, refresh } from "./otp-helpers"
 
 export function OtpList(props: { isLogin: boolean | undefined; setLogin: (login: boolean) => void }) {
   const [items, setItems] = useState<{ otpList: Service[]; isLoading: boolean }>({
     otpList: [],
     isLoading: true,
-  });
+  })
 
   useEffect(() => {
     if (!props.isLogin) {
-      return;
+      return
     }
-    loadData(setItems);
-  }, [props.isLogin]);
+    loadData(setItems)
+  }, [props.isLogin])
 
   // error checking
   useEffect(() => {
-    checkError(items.otpList);
-  }, [items]);
+    checkError(items.otpList)
+  }, [items])
 
   return (
     <List searchBarPlaceholder="Search" isLoading={items.isLoading}>
@@ -35,5 +35,5 @@ export function OtpList(props: { isLogin: boolean | undefined; setLogin: (login:
         <OtpListItems items={items.otpList} setItems={setItems} />
       )}
     </List>
-  );
+  )
 }

@@ -1,30 +1,30 @@
-import { Action, ActionPanel, Form, Toast, environment, getPreferenceValues, open, showToast } from "@raycast/api";
-import { encode } from "hi-base32";
-import * as fs from "node:fs";
-import { homedir } from "node:os";
-import protobuf from "protobufjs";
-import qrcode from "qrcode";
-import { APPS_KEY, SERVICES_KEY, getFromCache } from "../../cache";
-import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "../../client/dto";
-import { decryptSeed } from "../../util/totp";
+import { Action, ActionPanel, Form, Toast, environment, getPreferenceValues, open, showToast } from "@raycast/api"
+import { encode } from "hi-base32"
+import * as fs from "node:fs"
+import { homedir } from "node:os"
+import protobuf from "protobufjs"
+import qrcode from "qrcode"
+import { APPS_KEY, SERVICES_KEY, getFromCache } from "../../cache"
+import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "../../client/dto"
+import { decryptSeed } from "../../util/totp"
 
-const { authyPassword } = getPreferenceValues<{ authyPassword: string }>();
+const { authyPassword } = getPreferenceValues<{ authyPassword: string }>()
 
 interface Options {
-  folder: string;
-  authyData: boolean;
-  decryptedData: boolean;
-  authUrl: boolean;
-  googleExport: boolean;
+  folder: string
+  authyData: boolean
+  decryptedData: boolean
+  authUrl: boolean
+  googleExport: boolean
 }
 
 interface DecryptedData {
-  name: string;
-  issuer?: string;
-  seed: string | null;
-  algorithm: "SHA1" | "SHA256" | "SHA512";
-  digits: number;
-  period: number;
+  name: string
+  issuer?: string
+  seed: string | null
+  algorithm: "SHA1" | "SHA256" | "SHA512"
+  digits: number
+  period: number
 }
 
 async function showFailedToast(message: string) {
@@ -32,21 +32,21 @@ async function showFailedToast(message: string) {
     style: Toast.Style.Failure,
     title: "Ente Auth",
     message: message,
-  });
+  })
 }
 
 function decryptData(apps: AppEntry[], services: AuthenticatorToken[]) {
-  const decryptedApps: DecryptedData[] = apps.map((i) => {
+  const decryptedApps: DecryptedData[] = apps.map(i => {
     return {
       name: i.name,
       seed: encode(Buffer.from(i.secret_seed, "hex")),
       algorithm: "SHA1",
       digits: i.digits,
       period: 10,
-    };
-  });
+    }
+  })
 
-  const decryptedServices: DecryptedData[] = services.map((i) => {
+  const decryptedServices: DecryptedData[] = services.map(i => {
     return {
       name: i.original_name || i.name,
       issuer: i.issuer,
@@ -54,9 +54,9 @@ function decryptData(apps: AppEntry[], services: AuthenticatorToken[]) {
       algorithm: "SHA1",
       digits: i.digits,
       period: 30,
-    };
-  });
-  return [...decryptedApps, ...decryptedServices];
+    }
+  })
+  return [...decryptedApps, ...decryptedServices]
 }
 
 async function exportData(options: Options) {
@@ -64,82 +64,78 @@ async function exportData(options: Options) {
     style: Toast.Style.Animated,
     title: "Ente Auth",
     message: "Exporting Data",
-  });
-  const appsResponse: AppsResponse = await getFromCache(APPS_KEY);
-  const servicesResponse: ServicesResponse = await getFromCache(SERVICES_KEY);
-  const apps = appsResponse.apps;
-  const services = servicesResponse.authenticator_tokens;
-  const exportDir = `${options.folder}/authy_export`;
+  })
+  const appsResponse: AppsResponse = await getFromCache(APPS_KEY)
+  const servicesResponse: ServicesResponse = await getFromCache(SERVICES_KEY)
+  const apps = appsResponse.apps
+  const services = servicesResponse.authenticator_tokens
+  const exportDir = `${options.folder}/authy_export`
   if (!fs.existsSync(exportDir)) {
-    fs.mkdirSync(exportDir);
+    fs.mkdirSync(exportDir)
   }
   if (options.authyData) {
-    fs.writeFile(`${exportDir}/authy_apps_response.json`, JSON.stringify(appsResponse, undefined, 2), async (err) => {
+    fs.writeFile(`${exportDir}/authy_apps_response.json`, JSON.stringify(appsResponse, undefined, 2), async err => {
       if (err) {
-        await showFailedToast(err.message);
+        await showFailedToast(err.message)
       }
-    });
+    })
 
-    fs.writeFile(
-      `${exportDir}/authy_authenticator_tokens_response.json`,
-      JSON.stringify(servicesResponse, undefined, 2),
-      async (err) => {
-        if (err) {
-          await showFailedToast(err.message);
-        }
+    fs.writeFile(`${exportDir}/authy_authenticator_tokens_response.json`, JSON.stringify(servicesResponse, undefined, 2), async err => {
+      if (err) {
+        await showFailedToast(err.message)
       }
-    );
+    })
   }
   if (options.decryptedData) {
-    const decryptedData = decryptData(apps, services);
+    const decryptedData = decryptData(apps, services)
 
     if (options.authyData) {
-      fs.writeFile(`${exportDir}/decrypted_data.json`, JSON.stringify(decryptedData, undefined, 2), async (err) => {
+      fs.writeFile(`${exportDir}/decrypted_data.json`, JSON.stringify(decryptedData, undefined, 2), async err => {
         if (err) {
-          await showFailedToast(err.message);
+          await showFailedToast(err.message)
         }
-      });
+      })
     }
   }
   if (options.authUrl) {
-    const decryptedData = decryptData(apps, services);
-    const baseUrl = "otpauth://totp";
+    const decryptedData = decryptData(apps, services)
+    const baseUrl = "otpauth://totp"
     const urls = decryptedData
-      .filter((i) => {
-        return i.seed != null;
+      .filter(i => {
+        return i.seed != null
       })
-      .map((i) => {
-        const url = new URL(`${baseUrl}/${i.name}`);
-        url.searchParams.append("secret", i.seed!);
-        url.searchParams.append("algorithm", i.algorithm);
-        url.searchParams.append("digits", i.digits.toString());
-        url.searchParams.append("period", i.period.toString());
+      .map(i => {
+        const url = new URL(`${baseUrl}/${i.name}`)
+        url.searchParams.append("secret", i.seed!)
+        url.searchParams.append("algorithm", i.algorithm)
+        url.searchParams.append("digits", i.digits.toString())
+        url.searchParams.append("period", i.period.toString())
         if (i.issuer) {
-          url.searchParams.append("issuer", i.issuer);
+          url.searchParams.append("issuer", i.issuer)
         }
 
-        return url.toString();
-      });
-    fs.writeFile(`${exportDir}/otpauth_url.json`, JSON.stringify(urls, undefined, 2), async (err) => {
+        return url.toString()
+      })
+    fs.writeFile(`${exportDir}/otpauth_url.json`, JSON.stringify(urls, undefined, 2), async err => {
       if (err) {
-        await showFailedToast(err.message);
+        await showFailedToast(err.message)
       }
-    });
+    })
   }
 
   if (options.googleExport) {
-    const decryptedData = decryptData([], services);
+    const decryptedData = decryptData([], services)
 
-    const root = protobuf.loadSync(`${environment.assetsPath}/google_authenticator.proto`);
+    const root = protobuf.loadSync(`${environment.assetsPath}/google_authenticator.proto`)
 
-    const MigrationPayload = root.lookupType("MigrationPayload");
+    const MigrationPayload = root.lookupType("MigrationPayload")
 
-    const batchSize = Math.floor(decryptedData.length / 10) + (decryptedData.length % 10 > 0 ? 1 : 0);
+    const batchSize = Math.floor(decryptedData.length / 10) + (decryptedData.length % 10 > 0 ? 1 : 0)
     for (let i = 0, j = 0; i < decryptedData.length; i += 10, j += 1) {
-      const elements = decryptedData.slice(i, i + 10);
+      const elements = decryptedData.slice(i, i + 10)
       // handle this set
       const payload = {
-        otpParameters: elements.map((i) => {
+        otpParameters: elements.map(i => {
           return {
             secret: Buffer.from(i.seed ? i.seed : ""),
             name: i.name,
@@ -148,28 +144,28 @@ async function exportData(options: Options) {
             digits: i.digits == 6 ? 1 : i.digits == 8 ? 2 : 0, // digit count DIGIT_COUNT_SIX or DIGIT_COUNT_EIGHT or DIGIT_COUNT_UNSPECIFIED
             type: 2, // OTP_TYPE_TOTP
             counter: i.period,
-          };
+          }
         }),
         version: 2,
         batchSize: batchSize,
         batchIndex: j,
-      };
-
-      const errMsg = MigrationPayload.verify(payload);
-      if (errMsg) {
-        await showFailedToast(errMsg);
       }
 
-      const message = MigrationPayload.create(payload);
-      const buffer = MigrationPayload.encode(message).finish();
-      const result = Buffer.from(buffer).toString("base64");
-      const url = `otpauth-migration://offline?data=${result}`;
+      const errMsg = MigrationPayload.verify(payload)
+      if (errMsg) {
+        await showFailedToast(errMsg)
+      }
 
-      qrcode.toFile(`${exportDir}/google_authenticator_${j}.png`, url, (err) => {
+      const message = MigrationPayload.create(payload)
+      const buffer = MigrationPayload.encode(message).finish()
+      const result = Buffer.from(buffer).toString("base64")
+      const url = `otpauth-migration://offline?data=${result}`
+
+      qrcode.toFile(`${exportDir}/google_authenticator_${j}.png`, url, err => {
         if (err) {
-          showFailedToast(err.message);
+          showFailedToast(err.message)
         }
-      });
+      })
     }
   }
 
@@ -177,9 +173,9 @@ async function exportData(options: Options) {
     style: Toast.Style.Success,
     title: "Ente Auth",
     message: `Data Exported Check Export Folder: ${exportDir}`,
-  });
+  })
 
-  await open(exportDir);
+  await open(exportDir)
 }
 
 export default function Export() {
@@ -193,16 +189,8 @@ export default function Export() {
       }
     >
       <Form.Description text={"Exporting data from Authy"} />
-      <Form.Checkbox
-        label={"Export raw Authy data"}
-        id={"authyData"}
-        info={"Export raw Auth API responses with encrypted data"}
-      />
-      <Form.Checkbox
-        label={"Export decrypted data"}
-        id={"decryptedData"}
-        info={"Export decrypted seeds and options to generate OTPs"}
-      />
+      <Form.Checkbox label={"Export raw Authy data"} id={"authyData"} info={"Export raw Auth API responses with encrypted data"} />
+      <Form.Checkbox label={"Export decrypted data"} id={"decryptedData"} info={"Export decrypted seeds and options to generate OTPs"} />
       <Form.Checkbox
         label={"Generate otpauth urls"}
         id={"authUrl"}
@@ -222,5 +210,5 @@ export default function Export() {
         canChooseFiles={false}
       />
     </Form>
-  );
+  )
 }

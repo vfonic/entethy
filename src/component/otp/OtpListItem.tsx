@@ -1,16 +1,16 @@
-import { ActionPanel, Color, List } from "@raycast/api";
-import { icon } from "../../util/icon";
-import { compareByName } from "../../util/compare";
-import { getProgressIcon } from "@raycast/utils";
-import { Service } from "../login/login-helper";
-import { generateTOTP } from "../../util/totp";
-import { commonActions, CORRUPTED, otpActions, refresh, setItemsFunction } from "./otp-helpers";
+import { ActionPanel, Color, List } from "@raycast/api"
+import { getProgressIcon } from "@raycast/utils"
+import { compareByName } from "../../util/compare"
+import { icon } from "../../util/icon"
+import { generateTOTP } from "../../util/totp"
+import { Service } from "../login/login-helper"
+import { CORRUPTED, commonActions, otpActions, refresh, setItemsFunction } from "./otp-helpers"
 
 interface OtpListItemProps {
-  index: number;
-  item: Service;
-  timeLeft: number;
-  setItems: setItemsFunction;
+  index: number
+  item: Service
+  timeLeft: number
+  setItems: setItemsFunction
 }
 
 export default function OtpListItem({ index, item, timeLeft, setItems }: OtpListItemProps) {
@@ -21,10 +21,10 @@ export default function OtpListItem({ index, item, timeLeft, setItems }: OtpList
           period: item.period,
           timestamp: new Date().getTime(),
         })
-      : CORRUPTED;
-  const subtitle = item.issuer || item.accountType || "";
-  const subtitleDisplay = subtitle.match("authenticator") || !compareByName(subtitle, item.name) ? "" : subtitle;
-  const progress = (100 - Math.round((timeLeft / item.period) * 100)) / 100;
+      : CORRUPTED
+  const subtitle = item.issuer || item.accountType || ""
+  const subtitleDisplay = subtitle.match("authenticator") || !compareByName(subtitle, item.name) ? "" : subtitle
+  const progress = (100 - Math.round((timeLeft / item.period) * 100)) / 100
 
   return (
     <List.Item
@@ -58,5 +58,5 @@ export default function OtpListItem({ index, item, timeLeft, setItems }: OtpList
         },
       ]}
     />
-  );
+  )
 }

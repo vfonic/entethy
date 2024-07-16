@@ -1,15 +1,15 @@
-import { Action, ActionPanel, Detail, Icon } from "@raycast/api";
-import { useEffect } from "react";
-import { getSrpData, login, resetSrpData } from "./login-helper";
+import { Action, ActionPanel, Detail, Icon } from "@raycast/api"
+import { useEffect } from "react"
+import { getSrpData, login, resetSrpData } from "./login-helper"
 
-const WELCOME_MESSAGE = `## Fetching OTP codes from Ente Auth`;
+const WELCOME_MESSAGE = `## Fetching OTP codes from Ente Auth`
 
 export default function LoginForm(props: { setLogin: (step: boolean) => void }) {
   useEffect(() => {
-    (async () => {
-      await getSrpData();
-    })();
-  });
+    ;(async () => {
+      await getSrpData()
+    })()
+  })
 
   return (
     <Detail
@@ -21,5 +21,5 @@ export default function LoginForm(props: { setLogin: (step: boolean) => void }) 
         </ActionPanel>
       }
     />
-  );
+  )
 }

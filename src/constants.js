@@ -1,4 +1,4 @@
-exports.icondir = "icons";
+exports.icondir = "icons"
 
 const logos = {
   amazon: [],
@@ -42,19 +42,19 @@ const logos = {
   twilio: [],
   synology: [],
   namecheap: [],
-};
+}
 
-exports.logos = [...Object.keys(logos), ...Object.values(logos).flat()];
+exports.logos = [...Object.keys(logos), ...Object.values(logos).flat()]
 
 // build reverse mapping of aliases to icon once at runtime
 exports.logoAliases = Object.entries(logos).reduce((acc, [key, value]) => {
   if (value.length) {
     for (const alias of value) {
-      acc[alias] = key;
+      acc[alias] = key
     }
   }
-  return acc;
-}, {});
+  return acc
+}, {})
 
 exports.genericColors = [
   { name: "black", value: "#464646" },
@@ -63,6 +63,6 @@ exports.genericColors = [
   { name: "orange", value: "#F59E27" },
   { name: "purple", value: "#7408B4" },
   { name: "red", value: "#DF1112" },
-];
+]
 
-exports.icons = ["key"];
+exports.icons = ["key"]
