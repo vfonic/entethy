@@ -11,7 +11,7 @@ import {
   removeFromCache,
   SECRET_SEED,
   SERVICES_KEY,
-  SRP_DATA,
+  SRP_ATTRIBUTES,
 } from "../../cache";
 import {
   checkRequestStatus,
@@ -38,26 +38,16 @@ export interface Service {
 const { enteEmail } = getPreferenceValues<{ enteEmail: string }>();
 
 // SRP - Secure Remote Password
-export async function requestLoginIfNeeded() {
-  const toast = await showToast({
-    style: Toast.Style.Animated,
-    title: "Ente Auth",
-    message: "Getting SRP data",
-  });
+export async function getSrpData() {
   try {
-    const hasSrpData = await checkIfCached(SRP_DATA);
+    const hasSrpData = await checkIfCached(SRP_ATTRIBUTES);
     if (!hasSrpData) {
       const srpAttributes = await getSRPAttributes(enteEmail);
-      await addToCache(SRP_DATA, JSON.stringify(srpAttributes));
+      await addToCache(SRP_ATTRIBUTES, JSON.stringify(srpAttributes));
     }
   } catch (error) {
     if (error instanceof Error) {
-      await toast.hide();
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Ente Auth",
-        message: error.message,
-      });
+      await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message });
     } else {
       throw error;
     }
@@ -65,20 +55,18 @@ export async function requestLoginIfNeeded() {
 }
 
 export async function login(setLogin: (step: boolean) => void) {
-  const loginToast = new Toast({
-    title: "Ente Auth",
-  });
+  const loginToast = new Toast({ title: "Ente Auth" });
 
   try {
     // check if login request exist
-    if (!(await checkIfCached(SRP_DATA))) {
+    if (!(await checkIfCached(SRP_ATTRIBUTES))) {
       loginToast.message = "Login Request not found";
       loginToast.style = Toast.Style.Failure;
       await loginToast.show();
       return;
     }
 
-    const requestId: string = await getFromCache(SRP_DATA);
+    const requestId: string = await getFromCache(SRP_ATTRIBUTES);
     const device = await checkForApproval(requestId, loginToast);
 
     if (device == undefined) {
@@ -108,11 +96,11 @@ export async function login(setLogin: (step: boolean) => void) {
   }
 }
 
-export async function resetRegistration() {
-  await removeFromCache(SRP_DATA);
-  await removeFromCache(DEVICE_ID);
-  await removeFromCache(SECRET_SEED);
-  await requestLoginIfNeeded();
+export async function resetSrpData() {
+  await removeFromCache(SRP_ATTRIBUTES);
+  // await removeFromCache(DEVICE_ID);
+  // await removeFromCache(SECRET_SEED);
+  await getSrpData();
 }
 
 async function checkForApproval(requestId: string, toast: Toast) {
@@ -129,7 +117,7 @@ async function checkForApproval(requestId: string, toast: Toast) {
     toast.style = Toast.Style.Failure;
     await toast.show();
 
-    await removeFromCache(SRP_DATA);
+    await removeFromCache(SRP_ATTRIBUTES);
     return;
   }
 
@@ -182,6 +170,6 @@ export async function logout() {
   await removeFromCache(DEVICE_ID);
   await removeFromCache(SERVICES_KEY);
   await removeFromCache(APPS_KEY);
-  await removeFromCache(SRP_DATA);
+  await removeFromCache(SRP_ATTRIBUTES);
   await removeFromCache(OTP_SERVICES_KEY);
 }

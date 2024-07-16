@@ -1,3 +1,4 @@
+import { Toast, showToast } from "@raycast/api";
 import crypto from "crypto";
 import fetch from "node-fetch";
 import os from "os";
@@ -18,8 +19,10 @@ const API_KEY = "37b312a3d682b823c439522e1fd31c82";
 const SIGNATURE = crypto.randomBytes(32).toString("hex");
 
 export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
+  const toast = await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting SRP data" });
   const resp = await fetch(`https://api.ente.io/users/srp/attributes?email=${encodeURIComponent(email)}`);
 
+  toast.hide();
   if (resp.ok) {
     return ((await resp.json()) as GetSRPAttributesResponse).attributes as SRPAttributes;
   } else {
