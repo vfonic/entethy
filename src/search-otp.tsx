@@ -45,20 +45,18 @@ export default function SearchOtp() {
   }, []);
 
   useEffect(() => {
-    // remove cached values if Ente email has been changed
-    async function invalidateCache() {
-      const isExist = await checkIfCached(ENTE_EMAIL);
-      if (isExist) {
+    async function removeCachedValuesIfEnteEmailHasBeenChanged() {
+      const isEmailCached = await checkIfCached(ENTE_EMAIL);
+      if (isEmailCached) {
+        const cachedEmail = await getFromCache<string>(ENTE_EMAIL);
         const { enteEmail } = getPreferenceValues<{ enteEmail: string }>();
-        const cachedId = await getFromCache<string>(ENTE_EMAIL);
-        if (enteEmail != cachedId) {
+        if (enteEmail != cachedEmail) {
           await logout();
           setLogin(false);
         }
       }
     }
-
-    invalidateCache();
+    removeCachedValuesIfEnteEmailHasBeenChanged();
   });
 
   if (isLogin == false) {

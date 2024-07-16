@@ -3,7 +3,7 @@ import { LocalStorage } from "@raycast/api";
 export const SERVICES_KEY = "services";
 export const APPS_KEY = "apps";
 export const OTP_SERVICES_KEY = "otpServices";
-export const REQUEST_ID = "requestId";
+export const SRP_DATA = "srpData";
 export const DEVICE_ID = "deviceId";
 export const SECRET_SEED = "secretSeed";
 export const ENTE_EMAIL = "enteEmail";

@@ -97,7 +97,7 @@ export async function checkError(otpList: Service[]) {
 export async function refresh(setItems: setItemsFunction) {
   const toast = await showToast({
     style: Toast.Style.Animated,
-    title: "Twilio’s Authy",
+    title: "Ente Auth",
     message: "Refreshing",
   });
   await toast.show();
@@ -117,7 +117,7 @@ export async function refresh(setItems: setItemsFunction) {
     if (error instanceof Error) {
       await showToast({
         style: Toast.Style.Failure,
-        title: "Twilio’s Authy",
+        title: "Ente Auth",
         message: error.message,
       });
       return;
@@ -133,7 +133,7 @@ export async function refresh(setItems: setItemsFunction) {
   await toast.hide();
   await showToast({
     style: Toast.Style.Success,
-    title: "Twilio’s Authy",
+    title: "Ente Auth",
     message: "Data has been synced",
   });
 }

@@ -2,27 +2,26 @@ import crypto from "crypto";
 import fetch from "node-fetch";
 import os from "os";
 import { URLSearchParams } from "url";
-import { ApiError, AppsResponse, Device, Registration, RegistrationStatus, ServicesResponse } from "./dto";
+import {
+  ApiError,
+  AppsResponse,
+  Device,
+  GetSRPAttributesResponse,
+  RegistrationStatus,
+  SRPAttributes,
+  ServicesResponse,
+} from "./dto";
 
-const baseUrl = "https://auth.ente.com";
+const baseUrl = "https://api.ente.io";
 // extracted from chrome plugin
 const API_KEY = "37b312a3d682b823c439522e1fd31c82";
 const SIGNATURE = crypto.randomBytes(32).toString("hex");
 
-export async function requestRegistration(enteEmail: number): Promise<Registration> {
-  const formData = new URLSearchParams();
-  formData.set("api_key", API_KEY);
-  formData.set("via", "push");
-  formData.set("device_app", "Raycast Ente Extension");
-  formData.set("device_name", `Raycast Ente Extension on ${os.hostname()}`);
-  formData.set("signature", SIGNATURE);
-  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/registration/start`, {
-    method: "POST",
-    body: formData,
-  });
+export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
+  const resp = await fetch(`https://api.ente.io/users/srp/attributes?email=${encodeURIComponent(email)}`);
 
   if (resp.ok) {
-    return (await resp.json()) as Registration;
+    return ((await resp.json()) as GetSRPAttributesResponse).attributes as SRPAttributes;
   } else {
     throw new Error(((await resp.json()) as ApiError).message);
   }

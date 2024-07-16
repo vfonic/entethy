@@ -7,12 +7,16 @@ export interface ApiError {
   error_code: string;
 }
 
-export interface Registration {
-  message: string;
-  request_id: string;
-  approval_pin: number;
-  provider: string;
-  success: boolean;
+export interface SRPAttributes {
+  srpUserID: string;
+  srpSalt: string;
+  memLimit: number;
+  opsLimit: number;
+  kekSalt: string;
+  isEmailMFAEnabled: boolean;
+}
+export interface GetSRPAttributesResponse {
+  attributes: SRPAttributes;
 }
 
 export interface RegistrationStatus {

@@ -1,4 +1,4 @@
-import { environment, getPreferenceValues, showToast, Toast } from "@raycast/api";
+import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { encode } from "hi-base32";
 import {
   addToCache,
@@ -9,28 +9,19 @@ import {
   getFromCache,
   OTP_SERVICES_KEY,
   removeFromCache,
-  REQUEST_ID,
   SECRET_SEED,
   SERVICES_KEY,
+  SRP_DATA,
 } from "../../cache";
 import {
   checkRequestStatus,
   completeRegistration,
   getAuthyApps,
   getServices,
-  requestRegistration,
-} from "../../client/authy-client";
+  getSRPAttributes,
+} from "../../client/ente-auth-client";
 import { generateTOTP } from "../../util/totp";
 import { mapOtpServices } from "../../util/utils";
-
-export const WELCOME_MESSAGE = `
-## Approval request has been sent
-To continue, approve request at any other device and press ⏎ to continue.
-
-<img src="file://${environment.assetsPath}/approve.png" height="200"  alt=""/>
-
-Or press ⌘ + ⏎ to start this process from scratch
-`;
 
 export interface Service {
   id: string;
@@ -44,26 +35,27 @@ export interface Service {
   type: "authy" | "service";
 }
 
-const { enteEmail } = getPreferenceValues<{ enteEmail: number }>();
+const { enteEmail } = getPreferenceValues<{ enteEmail: string }>();
 
+// SRP - Secure Remote Password
 export async function requestLoginIfNeeded() {
   const toast = await showToast({
     style: Toast.Style.Animated,
-    title: "Twilio’s Authy",
-    message: "Waiting for Approval",
+    title: "Ente Auth",
+    message: "Getting SRP data",
   });
   try {
-    const requestExists = await checkIfCached(REQUEST_ID);
-    if (!requestExists) {
-      const registration = await requestRegistration(enteEmail);
-      await addToCache(REQUEST_ID, registration.request_id);
+    const hasSrpData = await checkIfCached(SRP_DATA);
+    if (!hasSrpData) {
+      const srpAttributes = await getSRPAttributes(enteEmail);
+      await addToCache(SRP_DATA, JSON.stringify(srpAttributes));
     }
   } catch (error) {
     if (error instanceof Error) {
       await toast.hide();
       await showToast({
         style: Toast.Style.Failure,
-        title: "Twilio’s Authy",
+        title: "Ente Auth",
         message: error.message,
       });
     } else {
@@ -74,19 +66,19 @@ export async function requestLoginIfNeeded() {
 
 export async function login(setLogin: (step: boolean) => void) {
   const loginToast = new Toast({
-    title: "Twilio’s Authy",
+    title: "Ente Auth",
   });
 
   try {
     // check if login request exist
-    if (!(await checkIfCached(REQUEST_ID))) {
+    if (!(await checkIfCached(SRP_DATA))) {
       loginToast.message = "Login Request not found";
       loginToast.style = Toast.Style.Failure;
       await loginToast.show();
       return;
     }
 
-    const requestId: string = await getFromCache(REQUEST_ID);
+    const requestId: string = await getFromCache(SRP_DATA);
     const device = await checkForApproval(requestId, loginToast);
 
     if (device == undefined) {
@@ -117,7 +109,7 @@ export async function login(setLogin: (step: boolean) => void) {
 }
 
 export async function resetRegistration() {
-  await removeFromCache(REQUEST_ID);
+  await removeFromCache(SRP_DATA);
   await removeFromCache(DEVICE_ID);
   await removeFromCache(SECRET_SEED);
   await requestLoginIfNeeded();
@@ -137,7 +129,7 @@ async function checkForApproval(requestId: string, toast: Toast) {
     toast.style = Toast.Style.Failure;
     await toast.show();
 
-    await removeFromCache(REQUEST_ID);
+    await removeFromCache(SRP_DATA);
     return;
   }
 
@@ -190,6 +182,6 @@ export async function logout() {
   await removeFromCache(DEVICE_ID);
   await removeFromCache(SERVICES_KEY);
   await removeFromCache(APPS_KEY);
-  await removeFromCache(REQUEST_ID);
+  await removeFromCache(SRP_DATA);
   await removeFromCache(OTP_SERVICES_KEY);
 }

@@ -1,12 +1,12 @@
-import { Action, ActionPanel, environment, Form, getPreferenceValues, showToast, Toast, open } from "@raycast/api";
-import { homedir } from "node:os";
-import { APPS_KEY, getFromCache, SERVICES_KEY } from "../../cache";
+import { Action, ActionPanel, Form, Toast, environment, getPreferenceValues, open, showToast } from "@raycast/api";
 import { encode } from "hi-base32";
-import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "../../client/dto";
 import * as fs from "node:fs";
-import { decryptSeed } from "../../util/totp";
+import { homedir } from "node:os";
 import protobuf from "protobufjs";
 import qrcode from "qrcode";
+import { APPS_KEY, SERVICES_KEY, getFromCache } from "../../cache";
+import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "../../client/dto";
+import { decryptSeed } from "../../util/totp";
 
 const { authyPassword } = getPreferenceValues<{ authyPassword: string }>();
 
@@ -30,7 +30,7 @@ interface DecryptedData {
 async function showFailedToast(message: string) {
   await showToast({
     style: Toast.Style.Failure,
-    title: "Twilio’s Authy",
+    title: "Ente Auth",
     message: message,
   });
 }
@@ -62,7 +62,7 @@ function decryptData(apps: AppEntry[], services: AuthenticatorToken[]) {
 async function exportData(options: Options) {
   const toast = await showToast({
     style: Toast.Style.Animated,
-    title: "Twilio’s Authy",
+    title: "Ente Auth",
     message: "Exporting Data",
   });
   const appsResponse: AppsResponse = await getFromCache(APPS_KEY);
@@ -175,7 +175,7 @@ async function exportData(options: Options) {
 
   await showToast({
     style: Toast.Style.Success,
-    title: "Twilio’s Authy",
+    title: "Ente Auth",
     message: `Data Exported Check Export Folder: ${exportDir}`,
   });
 
