@@ -11,14 +11,13 @@ const API_KEY = "37b312a3d682b823c439522e1fd31c82"
 const SIGNATURE = crypto.randomBytes(32).toString("hex")
 
 export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
-  const toast = await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting SRP data" })
-  const resp = await fetch(`https://api.ente.io/users/srp/attributes?email=${encodeURIComponent(email)}`)
+  await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting SRP attributes" })
+  const response = await fetch(`https://api.ente.io/users/srp/attributes?email=${encodeURIComponent(email)}`)
 
-  toast.hide()
-  if (resp.ok) {
-    return ((await resp.json()) as GetSRPAttributesResponse).attributes as SRPAttributes
+  if (response.ok) {
+    return ((await response.json()) as GetSRPAttributesResponse).attributes as SRPAttributes
   } else {
-    throw new Error(((await resp.json()) as ApiError).message)
+    throw new Error(((await response.json()) as ApiError).message)
   }
 }
 

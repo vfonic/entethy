@@ -1,8 +1,20 @@
 import { Toast, showToast } from "@raycast/api"
 import { KEY_ATTRIBUTES, USER, addToCache, getFromCache } from "../../cache"
-import { loginViaSRP } from "../../ente/packages/accounts/services/srp"
+import { configureSRP, generateSRPSetupAttributes, loginViaSRP } from "../../ente/packages/accounts/services/srp"
+import {
+  decryptAndStoreToken,
+  generateAndSaveIntermediateKeyAttributes,
+  generateLoginSubKey,
+  saveKeyInSessionStore,
+} from "../../ente/packages/shared/crypto/helpers"
+import { isFirstLogin } from "../../ente/packages/shared/storage/localStorage/helpers"
+import { SRPAttributes } from "../../client/dto"
+import { getData, setData } from "../../ente/packages/shared/storage/localStorage"
+import { getSRPAttributes } from "../../client/ente-auth-client"
+import log from "../../ente/packages/next/log"
 
 export const getKeyAttributes = async (kek: string, srpAttributes: any) => {
+  await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting key attributes" })
   try {
     const { keyAttributes, encryptedToken, token, id, twoFactorSessionID, passkeySessionID } = await loginViaSRP(srpAttributes, kek)
     const user = (await getFromCache(USER)) as object
@@ -16,11 +28,7 @@ export const getKeyAttributes = async (kek: string, srpAttributes: any) => {
     if (keyAttributes) await addToCache(KEY_ATTRIBUTES, keyAttributes)
     return keyAttributes
   } catch (e) {
-    await showToast({
-      style: Toast.Style.Failure,
-      title: "Ente Auth",
-      message: "getKeyAttributes failed: " + e,
-    })
+    await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: "Getting key attributes failed: " + e })
     throw e
   }
 }

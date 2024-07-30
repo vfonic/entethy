@@ -77,47 +77,25 @@ export async function checkError(otpList: Service[]) {
  * Function to update a list of services
  */
 export async function refresh(setItems: setItemsFunction) {
-  const toast = await showToast({
-    style: Toast.Style.Animated,
-    title: "Ente Auth",
-    message: "Refreshing",
-  })
-  await toast.show()
-  setItems(prevState => {
-    return {
-      otpList: prevState.otpList,
-      isLoading: true,
-    }
-  })
+  await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Refreshing" })
+  setItems(prevState => ({ otpList: prevState.otpList, isLoading: true }))
   let services: Service[] = []
   try {
     await new Promise(resolve => setTimeout(resolve, 5000))
     const deviceId: number = await getFromCache(DEVICE_ID)
     const secretSeed: string = await getFromCache(SECRET_SEED)
-    services = await getOtpServices(deviceId, secretSeed, toast)
+    services = await getOtpServices(deviceId, secretSeed)
   } catch (error) {
     if (error instanceof Error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Ente Auth",
-        message: error.message,
-      })
+      await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message })
       return
     } else {
       throw error
     }
   }
   services = await sortServices(services)
-  setItems({
-    otpList: services,
-    isLoading: false,
-  })
-  await toast.hide()
-  await showToast({
-    style: Toast.Style.Success,
-    title: "Ente Auth",
-    message: "Data has been synced",
-  })
+  setItems({ otpList: services, isLoading: false })
+  await showToast({ style: Toast.Style.Success, title: "Ente Auth", message: "Data has been synced" })
 }
 
 /**

@@ -4,18 +4,15 @@ import { Service } from "../login/login-helper"
 import OtpListItems from "./OtpListItems"
 import { checkError, commonActions, loadData, refresh } from "./otp-helpers"
 
-export function OtpList(props: { isLogin: boolean | undefined; setLogin: (login: boolean) => void }) {
+export function OtpList(props: { isLoggedIn: boolean | undefined; setLoggedIn: (login: boolean) => void }) {
   const [items, setItems] = useState<{ otpList: Service[]; isLoading: boolean }>({
     otpList: [],
     isLoading: true,
   })
 
   useEffect(() => {
-    if (!props.isLogin) {
-      return
-    }
-    loadData(setItems)
-  }, [props.isLogin])
+    props.isLoggedIn && loadData(setItems)
+  }, [props.isLoggedIn])
 
   // error checking
   useEffect(() => {
@@ -27,7 +24,7 @@ export function OtpList(props: { isLogin: boolean | undefined; setLogin: (login:
       {items.otpList.length == 0 ? (
         <List.EmptyView
           icon={Icon.SpeechBubbleImportant}
-          title={"Add Services with Authy App to start"}
+          title={"Add Services with Ente Auth app to start"}
           description={"Then sync the extension with ⌘ + R"}
           actions={<ActionPanel>{commonActions(async () => await refresh(setItems))}</ActionPanel>}
         />

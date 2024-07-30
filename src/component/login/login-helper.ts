@@ -35,7 +35,7 @@ export interface Service {
 const { enteEmail, entePassword } = getPreferenceValues<{ enteEmail: string; entePassword: string }>()
 
 // SRP - Secure Remote Password
-export async function getSrpData() {
+export async function getSrpData(setIsLoggedIn: (step: boolean) => void) {
   try {
     const hasSrpData = await checkIfCached(SRP_ATTRIBUTES)
     let srpAttributes = null
@@ -47,13 +47,15 @@ export async function getSrpData() {
       srpAttributes = await getFromCache(SRP_ATTRIBUTES)
     }
 
-      const kek = await libsodium.deriveKey(entePassword, srpAttributes.kekSalt, srpAttributes.opsLimit, srpAttributes.memLimit)
+    await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Deriving Key Encryption Key" })
+    const kek = await libsodium.deriveKey(entePassword, srpAttributes.kekSalt, srpAttributes.opsLimit, srpAttributes.memLimit)
 
-      const keyAttributes = await getKeyAttributes(kek, srpAttributes)
+    const keyAttributes = await getKeyAttributes(kek, srpAttributes)
     if (!keyAttributes) throw new Error("KeyAttributes not found")
 
-      const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
-      useMasterPassword(key, kek, keyAttributes, entePassword)
+    await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Decrypting encrypted key" })
+    const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
+    useMasterPassword(key, kek, keyAttributes, entePassword)
   } catch (error) {
     if (error instanceof Error) {
       await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message })
@@ -78,11 +80,9 @@ export async function login(setLogin: (step: boolean) => void) {
     const requestId: string = await getFromCache(SRP_ATTRIBUTES)
     const device = await checkForApproval(requestId, loginToast)
 
-    if (device == undefined) {
-      return
-    }
+    if (device == undefined) return
 
-    await getOtpServices(device.device.id, device.device.secret_seed, loginToast)
+    await getOtpServices(device.device.id, device.device.secret_seed)
     await addToCache(ENTE_EMAIL, enteEmail)
 
     await loginToast.hide()
@@ -103,13 +103,6 @@ export async function login(setLogin: (step: boolean) => void) {
       throw error
     }
   }
-}
-
-export async function resetSrpData() {
-  await removeFromCache(SRP_ATTRIBUTES)
-  // await removeFromCache(DEVICE_ID);
-  // await removeFromCache(SECRET_SEED);
-  await getSrpData()
 }
 
 async function checkForApproval(requestId: string, toast: Toast) {
@@ -147,10 +140,8 @@ async function checkForApproval(requestId: string, toast: Toast) {
   return device
 }
 
-export async function getOtpServices(deviceId: number, secretSeed: string, toast: Toast) {
-  toast.message = "Getting Services"
-  toast.style = Toast.Style.Animated
-  await toast.show()
+export async function getOtpServices(deviceId: number, secretSeed: string) {
+  await showToast(Toast.Style.Animated, "Ente Auth", "Getting Services")
 
   const seed = encode(Buffer.from(secretSeed, "hex"))
   const timestamp = new Date()
