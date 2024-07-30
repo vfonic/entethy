@@ -1,4 +1,4 @@
-import { Action, confirmAlert, getPreferenceValues, Icon, open, openCommandPreferences, popToRoot, showToast, Toast } from "@raycast/api"
+import { Action, confirmAlert, getPreferenceValues, Icon, openCommandPreferences, popToRoot, showToast, Toast } from "@raycast/api"
 import { addToCache, checkIfCached, DEVICE_ID, getFromCache, OTP_SERVICES_KEY, RECENTLY_USED, SECRET_SEED } from "../../cache"
 import { compareByDate, compareByName, toId } from "../../util/compare"
 import Export from "../export/Export"
@@ -35,22 +35,22 @@ export async function loadData(setOtpList: SetOtpList): Promise<void> {
 /**
  *
  */
-export async function checkError(services: Service[]) {
+export async function checkAtLeastOneValidOtp(services: Service[]) {
   // filter out all the corrupted OTPs
   const all = services.filter(otp => otp.type == "service" && otp.seed != null)
   if (all.length > 0) return
   // if none of the OTPs are valid assume there is a problem with the password
   confirmAlert({
     title: "No valid OTP",
-    message: "Check your Authy Backup Password in settings",
+    message: "Check your Ente credentials in settings",
     primaryAction: { title: "Open Preferences", onAction: openCommandPreferences },
     dismissAction: {
       title: "Cancel",
       onAction: () =>
         confirmAlert({
           title: "No valid OTP",
-          message: "Check Q&A in store",
-          primaryAction: { title: "Open Store Page", onAction: () => open("https://www.raycast.com/guga4ka/authy") },
+          // message: "Check Q&A in store",
+          // primaryAction: { title: "Open Store Page", onAction: () => open("https://www.raycast.com/guga4ka/authy") },
         }),
     },
   })

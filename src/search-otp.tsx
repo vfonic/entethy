@@ -1,6 +1,6 @@
-import { List, showToast, Toast } from "@raycast/api"
 import { createContext, useContext, useState } from "react"
 import { Service } from "./component/login/login-helper"
+import { OtpList } from "./component/otp/OtpList"
 
 interface IOtpList {
   services: Service[]
@@ -22,19 +22,13 @@ export function useEnteContext() {
   return context
 }
 
-export default async function SearchOtp() {
+export default function SearchOtp() {
   const [otpList, setOtpList] = useState<IOtpList>({ services: [], isLoading: true })
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
 
-  // if (process.env.NODE_ENV === "development") {
-  await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Kick-off!!!" + process.env.NODE_ENV })
-  console.log("Hello World")
-
-  // <Action title={"Sync"} icon={Icon.ArrowClockwise} shortcut={{ modifiers: ["cmd"], key: "r" }} onAction={() => {}} />
   return (
-    <List isLoading={true} />
-    // <EnteContext.Provider value={{ isLoggedIn, setIsLoggedIn, otpList, setOtpList }}>
-    // <OtpList />
-    // </EnteContext.Provider>
+    <EnteContext.Provider value={{ isLoggedIn, setIsLoggedIn, otpList, setOtpList }}>
+      <OtpList />
+    </EnteContext.Provider>
   )
 }

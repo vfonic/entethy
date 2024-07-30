@@ -6,13 +6,14 @@ import { useEnteContext } from "../../search-otp"
 import { mapOtpServices } from "../../util/utils"
 import { login, removeCachedValuesIfEnteEmailHasBeenChanged } from "../login/login-helper"
 import OtpListItems from "./OtpListItems"
-import { checkError, commonActions, loadData, refresh } from "./otp-helpers"
+import { checkAtLeastOneValidOtp, commonActions, loadData, refresh } from "./otp-helpers"
 
 export function OtpList() {
   const { isLoggedIn, setIsLoggedIn, otpList, setOtpList } = useEnteContext()
 
   useEffect(() => {
-    async function loadFromCache() {
+    const loadFromCache = async () => {
+      console.log("loadFromCache")
       if (await checkIfCached(OTP_SERVICES_KEY)) {
         setIsLoggedIn(true)
         return
@@ -46,13 +47,17 @@ export function OtpList() {
 
   useEffect(() => {
     const init = async () => {
-      otpList.services?.length > 0 && (await checkError(otpList.services))
+      console.log("init")
+      otpList.services?.length > 0 && (await checkAtLeastOneValidOtp(otpList.services))
       await removeCachedValuesIfEnteEmailHasBeenChanged(setIsLoggedIn)
-      !isLoggedIn && (await login())
-      isLoggedIn && (await loadData(setOtpList))
+      if (!isLoggedIn) {
+        await login()
+      } else {
+        await loadData(setOtpList)
+      }
     }
     init()
-  }, [isLoggedIn, setIsLoggedIn])
+  }, [isLoggedIn])
 
   return (
     <List searchBarPlaceholder="Search" isLoading={!isLoggedIn || otpList.isLoading}>
