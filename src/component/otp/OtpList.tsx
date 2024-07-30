@@ -1,35 +1,70 @@
 import { ActionPanel, Icon, List } from "@raycast/api"
-import { useEffect, useState } from "react"
-import { Service } from "../login/login-helper"
+import { useEffect } from "react"
+import { addToCache, APPS_KEY, checkIfCached, getFromCache, OTP_SERVICES_KEY, SERVICES_KEY } from "../../cache"
+import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "../../client/dto"
+import { useEnteContext } from "../../search-otp"
+import { mapOtpServices } from "../../util/utils"
+import { login, removeCachedValuesIfEnteEmailHasBeenChanged } from "../login/login-helper"
 import OtpListItems from "./OtpListItems"
 import { checkError, commonActions, loadData, refresh } from "./otp-helpers"
 
-export function OtpList(props: { isLoggedIn: boolean | undefined; setLoggedIn: (login: boolean) => void }) {
-  const [items, setItems] = useState<{ otpList: Service[]; isLoading: boolean }>({
-    otpList: [],
-    isLoading: true,
-  })
+export function OtpList() {
+  const { isLoggedIn, setIsLoggedIn, otpList, setOtpList } = useEnteContext()
 
   useEffect(() => {
-    props.isLoggedIn && loadData(setItems)
-  }, [props.isLoggedIn])
+    async function loadFromCache() {
+      if (await checkIfCached(OTP_SERVICES_KEY)) {
+        setIsLoggedIn(true)
+        return
+      }
 
-  // error checking
+      // TODO: migration to single unified representation of otp service. Delete on the next release
+      const services: AuthenticatorToken[] = []
+      const apps: AppEntry[] = []
+
+      let isDataPresent = false
+      if (await checkIfCached(SERVICES_KEY)) {
+        const serviceResponse: ServicesResponse = await getFromCache(SERVICES_KEY)
+        services.push(...serviceResponse.authenticator_tokens)
+        isDataPresent = true
+      }
+
+      if (await checkIfCached(APPS_KEY)) {
+        const appsResponse: AppsResponse = await getFromCache(APPS_KEY)
+        apps.push(...appsResponse.apps)
+        isDataPresent = true
+      }
+
+      if (isDataPresent) {
+        const otpServices = mapOtpServices(services, apps)
+        await addToCache(OTP_SERVICES_KEY, otpServices)
+      }
+      setIsLoggedIn(isDataPresent)
+    }
+    loadFromCache()
+  }, [])
+
   useEffect(() => {
-    checkError(items.otpList)
-  }, [items])
+    const init = async () => {
+      otpList.services?.length > 0 && (await checkError(otpList.services))
+      await removeCachedValuesIfEnteEmailHasBeenChanged(setIsLoggedIn)
+      !isLoggedIn && (await login())
+      isLoggedIn && (await loadData(setOtpList))
+    }
+    init()
+  }, [isLoggedIn, setIsLoggedIn])
 
   return (
-    <List searchBarPlaceholder="Search" isLoading={items.isLoading}>
-      {items.otpList.length == 0 ? (
+    <List searchBarPlaceholder="Search" isLoading={!isLoggedIn || otpList.isLoading}>
+      {otpList.services.length == 0 ? (
         <List.EmptyView
           icon={Icon.SpeechBubbleImportant}
           title={"Add Services with Ente Auth app to start"}
           description={"Then sync the extension with ⌘ + R"}
-          actions={<ActionPanel>{commonActions(async () => await refresh(setItems))}</ActionPanel>}
+          actions={<ActionPanel>{commonActions(async () => await refresh(setOtpList))}</ActionPanel>}
         />
       ) : (
-        <OtpListItems items={items.otpList} setItems={setItems} />
+        <OtpListItems />
       )}
     </List>
   )

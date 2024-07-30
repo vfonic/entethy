@@ -10,6 +10,11 @@
     "Security"
   ],
   "license": "MIT",
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "make-assets": "./make-assets.js"
+  },
   "commands": [
     {
       "name": "search-otp",
@@ -97,10 +102,5 @@
     "sharp": "^0.33.4",
     "simple-icons": "^6.14.0",
     "typescript": "^4.6.2"
-  },
-  "scripts": {
-    "build": "ray build -e dist",
-    "dev": "ray develop",
-    "make-assets": "./make-assets.js"
   }
 }

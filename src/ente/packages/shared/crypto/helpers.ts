@@ -4,11 +4,9 @@ import log from "../../next/log";
 import {
     LS_KEYS,
     getData,
-    setData,
-    setLSUser,
+    setData
 } from "../../shared/storage/localStorage";
 import { getToken } from "../../shared/storage/localStorage/helpers";
-import { SESSION_KEYS, setKey } from "../../shared/storage/sessionStorage";
 import { getActualKey } from "../../shared/user";
 import type { KeyAttributes } from "../../shared/user/types";
 
@@ -20,8 +18,8 @@ const LOGIN_SUB_KEY_BYTE_LENGTH = 16;
 export async function decryptAndStoreToken(
     keyAttributes: KeyAttributes,
     masterKey: string,
+    user: any,
 ) {
-    const user = getData(LS_KEYS.USER);
     let decryptedToken = null;
     const { encryptedToken } = user;
     if (encryptedToken && encryptedToken.length > 0) {
@@ -39,11 +37,11 @@ export async function decryptAndStoreToken(
             urlUnsafeB64DecryptedToken,
         );
         decryptedToken = await libsodium.toB64URLSafe(decryptedTokenBytes);
-        await setLSUser({
+        return {
             ...user,
             token: decryptedToken,
             encryptedToken: null,
-        });
+        };
     }
 }
 
@@ -52,7 +50,7 @@ export async function decryptAndStoreToken(
 // passphrase (with Interactive mem and ops limits) to avoid saving it to local
 // storage in plain text. This means that on the web user will always have to
 // enter their passphrase to access their masterKey.
-export async function generateAndSaveIntermediateKeyAttributes(
+export async function generateIntermediateKeyAttributes(
     passphrase: string,
     existingKeyAttributes: KeyAttributes,
     key: string,
@@ -62,10 +60,7 @@ export async function generateAndSaveIntermediateKeyAttributes(
         passphrase,
         intermediateKekSalt,
     );
-    const encryptedKeyAttributes = await libsodium.encryptToB64(
-        key,
-        intermediateKek.key,
-    );
+    const encryptedKeyAttributes = await libsodium.encryptToB64(key, intermediateKek.key);
 
     const intermediateKeyAttributes = Object.assign(existingKeyAttributes, {
         kekSalt: intermediateKekSalt,
@@ -74,7 +69,6 @@ export async function generateAndSaveIntermediateKeyAttributes(
         opsLimit: intermediateKek.opsLimit,
         memLimit: intermediateKek.memLimit,
     });
-    setData(LS_KEYS.KEY_ATTRIBUTES, intermediateKeyAttributes);
     return intermediateKeyAttributes;
 }
 
@@ -95,18 +89,8 @@ export const generateLoginSubKey = async (kek: string) => {
     return loginSubKey;
 };
 
-export const saveKeyInSessionStore = async (
-    keyType: SESSION_KEYS,
-    key: string,
-    fromDesktop?: boolean,
-) => {
-    const sessionKeyAttributes =
-        await libsodium.generateKeyAndEncryptToB64(key);
-    setKey(keyType, sessionKeyAttributes);
-    const electron = globalThis.electron;
-    if (electron && !fromDesktop && keyType === SESSION_KEYS.ENCRYPTION_KEY) {
-        electron.saveEncryptionKey(key);
-    }
+export const generateSessionKey = async (key: string) => {
+    return await libsodium.generateKeyAndEncryptToB64(key);
 };
 
 export async function encryptWithRecoveryKey(key: string) {

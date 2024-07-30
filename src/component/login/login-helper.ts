@@ -14,7 +14,7 @@ import {
   SRP_ATTRIBUTES,
   USER,
 } from "../../cache"
-import { checkRequestStatus, completeRegistration, getAuthyApps, getServices, getSRPAttributes } from "../../client/ente-auth-client"
+import { getAuthyApps, getServices, getSRPAttributes } from "../../client/ente-auth-client"
 import { generateTOTP } from "../../util/totp"
 import { mapOtpServices } from "../../util/utils"
 import * as libsodium from "./libsodium"
@@ -35,7 +35,7 @@ export interface Service {
 const { enteEmail, entePassword } = getPreferenceValues<{ enteEmail: string; entePassword: string }>()
 
 // SRP - Secure Remote Password
-export async function getSrpData(setIsLoggedIn: (step: boolean) => void) {
+export async function login() {
   try {
     const hasSrpData = await checkIfCached(SRP_ATTRIBUTES)
     let srpAttributes = null
@@ -55,6 +55,7 @@ export async function getSrpData(setIsLoggedIn: (step: boolean) => void) {
 
     await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Decrypting encrypted key" })
     const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
+    console.log({ key, kek, keyAttributes, entePassword })
     useMasterPassword(key, kek, keyAttributes, entePassword)
   } catch (error) {
     if (error instanceof Error) {
@@ -63,81 +64,6 @@ export async function getSrpData(setIsLoggedIn: (step: boolean) => void) {
       throw error
     }
   }
-}
-
-export async function login(setLogin: (step: boolean) => void) {
-  const loginToast = new Toast({ title: "Ente Auth" })
-
-  try {
-    // check if login request exist
-    if (!(await checkIfCached(SRP_ATTRIBUTES))) {
-      loginToast.message = "Login Request not found"
-      loginToast.style = Toast.Style.Failure
-      await loginToast.show()
-      return
-    }
-
-    const requestId: string = await getFromCache(SRP_ATTRIBUTES)
-    const device = await checkForApproval(requestId, loginToast)
-
-    if (device == undefined) return
-
-    await getOtpServices(device.device.id, device.device.secret_seed)
-    await addToCache(ENTE_EMAIL, enteEmail)
-
-    await loginToast.hide()
-
-    loginToast.style = Toast.Style.Success
-    loginToast.message = "Success Login"
-    await loginToast.show()
-
-    setLogin(true)
-    await loginToast.hide()
-  } catch (error) {
-    if (error instanceof Error) {
-      await loginToast.hide()
-      loginToast.message = `Something went wrong. Try again.\n${error.message}`
-      loginToast.style = Toast.Style.Failure
-      await loginToast.show()
-    } else {
-      throw error
-    }
-  }
-}
-
-async function checkForApproval(requestId: string, toast: Toast) {
-  toast.message = "Checking request status"
-  toast.style = Toast.Style.Animated
-  await toast.show()
-
-  const registrationStatus = await checkRequestStatus(enteEmail, requestId)
-
-  if (registrationStatus.status == "rejected") {
-    await toast.hide()
-
-    toast.message = "Seems like you rejected registration request"
-    toast.style = Toast.Style.Failure
-    await toast.show()
-
-    await removeFromCache(SRP_ATTRIBUTES)
-    return
-  }
-
-  if (registrationStatus.status == "pending") {
-    await toast.hide()
-
-    toast.message = "Seems like you didn't approve registration request"
-    toast.style = Toast.Style.Failure
-    await toast.show()
-
-    return
-  }
-
-  const device = await completeRegistration(enteEmail, registrationStatus.pin)
-  await addToCache(DEVICE_ID, device.device.id)
-  await addToCache(SECRET_SEED, device.device.secret_seed)
-  await toast.hide()
-  return device
 }
 
 export async function getOtpServices(deviceId: number, secretSeed: string) {
@@ -156,13 +82,13 @@ export async function getOtpServices(deviceId: number, secretSeed: string) {
   // get 3rd party services
   const authyServicesResponse = await getServices(enteEmail, deviceId, otps)
   // map opt Services to common format
-  const optServices = mapOtpServices(authyServicesResponse.authenticator_tokens, authyAppResponse.apps)
+  const otpServices = mapOtpServices(authyServicesResponse.authenticator_tokens, authyAppResponse.apps)
 
   await addToCache(SERVICES_KEY, authyServicesResponse)
   await addToCache(APPS_KEY, authyAppResponse)
-  await addToCache(OTP_SERVICES_KEY, optServices)
+  await addToCache(OTP_SERVICES_KEY, otpServices)
 
-  return optServices
+  return otpServices
 }
 
 export async function logout() {
@@ -172,4 +98,16 @@ export async function logout() {
   await removeFromCache(APPS_KEY)
   await removeFromCache(SRP_ATTRIBUTES)
   await removeFromCache(OTP_SERVICES_KEY)
+}
+
+export async function removeCachedValuesIfEnteEmailHasBeenChanged(setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>) {
+  const isEmailCached = await checkIfCached(ENTE_EMAIL)
+  if (isEmailCached) {
+    const cachedEmail = await getFromCache<string>(ENTE_EMAIL)
+    const { enteEmail } = getPreferenceValues<{ enteEmail: string }>()
+    if (enteEmail != cachedEmail) {
+      await logout()
+      setIsLoggedIn(false)
+    }
+  }
 }

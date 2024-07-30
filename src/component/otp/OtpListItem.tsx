@@ -1,58 +1,52 @@
 import { ActionPanel, Color, List } from "@raycast/api"
 import { getProgressIcon } from "@raycast/utils"
+import { useEnteContext } from "../../search-otp"
 import { compareByName } from "../../util/compare"
 import { icon } from "../../util/icon"
 import { generateTOTP } from "../../util/totp"
 import { Service } from "../login/login-helper"
-import { CORRUPTED, commonActions, otpActions, refresh, setItemsFunction } from "./otp-helpers"
+import { CORRUPTED, commonActions, otpActions, refresh } from "./otp-helpers"
 
 interface OtpListItemProps {
   index: number
-  item: Service
+  service: Service
   timeLeft: number
-  setItems: setItemsFunction
 }
 
-export default function OtpListItem({ index, item, timeLeft, setItems }: OtpListItemProps) {
+export default function OtpListItem({ index, service, timeLeft }: OtpListItemProps) {
+  const { setOtpList } = useEnteContext()
+
   const otp =
-    item.seed != null
-      ? generateTOTP(item.seed, {
-          digits: item.digits,
-          period: item.period,
+    service.seed != null
+      ? generateTOTP(service.seed, {
+          digits: service.digits,
+          period: service.period,
           timestamp: new Date().getTime(),
         })
       : CORRUPTED
-  const subtitle = item.issuer || item.accountType || ""
-  const subtitleDisplay = subtitle.match("authenticator") || !compareByName(subtitle, item.name) ? "" : subtitle
-  const progress = (100 - Math.round((timeLeft / item.period) * 100)) / 100
+  const subtitle = service.issuer || service.accountType || ""
+  const subtitleDisplay = subtitle.match("authenticator") || !compareByName(subtitle, service.name) ? "" : subtitle
+  const progress = (100 - Math.round((timeLeft / service.period) * 100)) / 100
 
   return (
     <List.Item
-      title={item.name}
+      title={service.name}
       subtitle={subtitleDisplay}
-      icon={icon(item)}
+      icon={icon(service)}
       keywords={[subtitle]}
       actions={
         <ActionPanel>
-          {otpActions(otp, item.id, index, setItems)}
-          {commonActions(async () => await refresh(setItems))}
+          {otpActions(otp, service.id, index, setOtpList)}
+          {commonActions(async () => await refresh(setOtpList))}
         </ActionPanel>
       }
       accessories={[
-        {
-          tag: `${otp}`,
-        },
+        { tag: `${otp}` },
         {
           icon: {
             source: {
-              light: getProgressIcon(progress, "#CCC", {
-                background: Color.PrimaryText,
-                backgroundOpacity: 1,
-              }),
-              dark: getProgressIcon(progress, "#333", {
-                background: Color.PrimaryText,
-                backgroundOpacity: 1,
-              }),
+              light: getProgressIcon(progress, "#CCC", { background: Color.PrimaryText, backgroundOpacity: 1 }),
+              dark: getProgressIcon(progress, "#333", { background: Color.PrimaryText, backgroundOpacity: 1 }),
             },
           },
         },

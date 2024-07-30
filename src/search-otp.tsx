@@ -1,67 +1,40 @@
-import { getPreferenceValues } from "@raycast/api"
-import { useEffect, useState } from "react"
-import { APPS_KEY, ENTE_EMAIL, OTP_SERVICES_KEY, SERVICES_KEY, addToCache, checkIfCached, getFromCache } from "./cache"
-import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "./client/dto"
-import LoginForm from "./component/login/LoginForm"
-import { logout } from "./component/login/login-helper"
-import { OtpList } from "./component/otp/OtpList"
-import { mapOtpServices } from "./util/utils"
+import { List, showToast, Toast } from "@raycast/api"
+import { createContext, useContext, useState } from "react"
+import { Service } from "./component/login/login-helper"
 
-export default function SearchOtp() {
-  const [isLogin, setLogin] = useState<boolean>()
+interface IOtpList {
+  services: Service[]
+  isLoading: boolean
+}
 
-  useEffect(() => {
-    async function checkData() {
-      if (await checkIfCached(OTP_SERVICES_KEY)) {
-        setLogin(true)
-        return
-      }
+interface EnteContextType {
+  isLoggedIn: boolean
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
+  otpList: IOtpList
+  setOtpList: React.Dispatch<React.SetStateAction<IOtpList>>
+}
 
-      // TODO: migration to single unified representation of otp service. Delete on the next release
-      const services: AuthenticatorToken[] = []
-      const apps: AppEntry[] = []
-      let dataPresent = false
+export const EnteContext = createContext<EnteContextType | undefined>(undefined)
 
-      if (await checkIfCached(SERVICES_KEY)) {
-        const serviceResponse: ServicesResponse = await getFromCache(SERVICES_KEY)
-        services.push(...serviceResponse.authenticator_tokens)
-        dataPresent = true
-      }
+export function useEnteContext() {
+  const context = useContext(EnteContext)
+  if (context === undefined) throw new Error("useEnteContext must be used within an EnteContext")
+  return context
+}
 
-      if (await checkIfCached(APPS_KEY)) {
-        const appsResponse: AppsResponse = await getFromCache(APPS_KEY)
-        apps.push(...appsResponse.apps)
-        dataPresent = true
-      }
+export default async function SearchOtp() {
+  const [otpList, setOtpList] = useState<IOtpList>({ services: [], isLoading: true })
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
 
-      if (dataPresent) {
-        const optServices = mapOtpServices(services, apps)
-        await addToCache(OTP_SERVICES_KEY, optServices)
-      }
-      setLogin(dataPresent)
-    }
+  // if (process.env.NODE_ENV === "development") {
+  await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Kick-off!!!" + process.env.NODE_ENV })
+  console.log("Hello World")
 
-    checkData()
-  }, [])
-
-  useEffect(() => {
-    async function removeCachedValuesIfEnteEmailHasBeenChanged() {
-      const isEmailCached = await checkIfCached(ENTE_EMAIL)
-      if (isEmailCached) {
-        const cachedEmail = await getFromCache<string>(ENTE_EMAIL)
-        const { enteEmail } = getPreferenceValues<{ enteEmail: string }>()
-        if (enteEmail != cachedEmail) {
-          await logout()
-          setLogin(false)
-        }
-      }
-    }
-    removeCachedValuesIfEnteEmailHasBeenChanged()
-  })
-
-  if (isLogin == false) {
-    return <LoginForm setLogin={setLogin} />
-  }
-
-  return <OtpList isLogin={isLogin} setLogin={setLogin} />
+  // <Action title={"Sync"} icon={Icon.ArrowClockwise} shortcut={{ modifiers: ["cmd"], key: "r" }} onAction={() => {}} />
+  return (
+    <List isLoading={true} />
+    // <EnteContext.Provider value={{ isLoggedIn, setIsLoggedIn, otpList, setOtpList }}>
+    // <OtpList />
+    // </EnteContext.Provider>
+  )
 }
