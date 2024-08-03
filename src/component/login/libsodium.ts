@@ -42,6 +42,19 @@ export async function decryptB64(data: string, nonce: string, key: string) {
   return await toB64(decrypted)
 }
 
+const textDecoder = new TextDecoder()
+export async function decryptMetadata(encryptedMetadata: string, header: string, key: string) {
+  const encodedMetadata = await decryptChaChaOneShot(await fromB64(encryptedMetadata), await fromB64(header), key)
+  return JSON.parse(textDecoder.decode(encodedMetadata))
+}
+
+export async function decryptChaChaOneShot(data: Uint8Array, header: Uint8Array, key: string) {
+  await sodium.ready
+  const pullState = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, await fromB64(key))
+  const pullResult = sodium.crypto_secretstream_xchacha20poly1305_pull(pullState, data, null)
+  return pullResult.message
+}
+
 async function encrypt(data: Uint8Array, key: Uint8Array) {
   await sodium.ready
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
