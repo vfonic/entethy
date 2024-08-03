@@ -1,19 +1,21 @@
-// import log from "@/next/log";
-// import { apiURL } from "@/next/origins";
-import { HttpStatusCode } from "axios";
+import fetch from "node-fetch";
 import * as libsodium from "../../../../../component/login/libsodium";
-// import ComlinkCryptoWorker from "../../../../packages/shared/crypto";
 import { apiURL } from "../../../../packages/next/origins";
-import { ApiError, CustomError } from "../../../../packages/shared/error";
-import HTTPService from "../../../../packages/shared/network/HTTPService";
+import { CustomError } from "../../../../packages/shared/error";
 import { getToken } from "../../../../packages/shared/storage/localStorage/helpers";
 import { getActualKey } from "../../../../packages/shared/user";
 import { codeFromURIString, type Code } from "./code";
+// import log from "@/next/log";
+// import { apiURL } from "@/next/origins";
+// import ComlinkCryptoWorker from "../../../../packages/shared/crypto";
 
 export const getAuthCodes = async (): Promise<Code[]> => {
+    console.log("getAuthCodes")
     const masterKey = await getActualKey();
+    console.log("getAuthCodes: masterKey", masterKey)
     try {
         const authKeyData = await getAuthKey();
+        console.log("getAuthCodes: authKeyData", authKeyData)
         // const cryptoWorker = await ComlinkCryptoWorker.getInstance();
         const authenticatorKey = await libsodium.decryptB64(
             authKeyData.encryptedKey,
@@ -22,6 +24,7 @@ export const getAuthCodes = async (): Promise<Code[]> => {
         );
         // always fetch all data from server for now
         const authEntity: AuthEntity[] = await getDiff(0);
+        console.log("getAuthCodes: authEntity", authEntity)
         const authCodes = await Promise.all(
             authEntity
                 .filter((f) => !f.isDeleted)
@@ -43,7 +46,9 @@ export const getAuthCodes = async (): Promise<Code[]> => {
                     }
                 }),
         );
+        console.log("getAuthCodes: authCodes", authCodes)
         const filteredAuthCodes = authCodes.filter((f) => f !== undefined);
+        console.log("getAuthCodes: filteredAuthCodes", filteredAuthCodes)
         filteredAuthCodes.sort((a, b) => {
             if (a.issuer && b.issuer) {
                 return a.issuer.localeCompare(b.issuer);
@@ -56,6 +61,7 @@ export const getAuthCodes = async (): Promise<Code[]> => {
             }
             return 0;
         });
+        console.log("getAuthCodes: filteredAuthCodes", filteredAuthCodes)
         return filteredAuthCodes;
     } catch (e) {
         if (e instanceof Error && e.message != CustomError.AUTH_KEY_NOT_FOUND) {
@@ -81,24 +87,19 @@ interface AuthKey {
 
 export const getAuthKey = async (): Promise<AuthKey> => {
     try {
-        const resp = await HTTPService.get(
+        const resp = await fetch(
             await apiURL("/authenticator/key"),
-            {},
             {
-                "X-Auth-Token": getToken(),
+                method: "GET",
+                headers: {
+                    "X-Auth-Token": await getToken(),
+                },
             },
         );
-        return resp.data;
+        return await resp.json() as Promise<AuthKey>;
     } catch (e) {
-        if (
-            e instanceof ApiError &&
-            e.httpStatusCode == HttpStatusCode.NotFound
-        ) {
-            throw Error(CustomError.AUTH_KEY_NOT_FOUND);
-        } else {
-            console.error("Get key failed", e);
-            throw e;
-        }
+        console.error("Get key failed", e);
+        throw e;
     }
 };
 
@@ -108,17 +109,16 @@ export const getDiff = async (
     limit = 2500,
 ): Promise<AuthEntity[]> => {
     try {
-        const resp = await HTTPService.get(
-            await apiURL("/authenticator/entity/diff"),
+        const resp = await fetch(
+            `${await apiURL("/authenticator/entity/diff")}?sinceTime=${sinceTime}&limit=${limit}`,
             {
-                sinceTime,
-                limit,
-            },
-            {
-                "X-Auth-Token": getToken(),
+                method: "GET",
+                headers: {
+                    "X-Auth-Token": await getToken(),
+                },
             },
         );
-        return resp.data.diff;
+        return (await resp.json()).diff;
     } catch (e) {
         console.error("Get diff failed", e);
         throw e;

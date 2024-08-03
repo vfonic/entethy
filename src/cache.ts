@@ -6,9 +6,7 @@ export const OTP_SERVICES_KEY = "otpServices"
 
 export const USER = "user"
 export const SRP_ATTRIBUTES = "srpAttributes"
-export const KEY_ENCRYPTION_KEY = "keyEncryptionKey"
 export const KEY_ATTRIBUTES = "keyAttributes"
-export const ENCRYPTION_KEY = "encryptionKey"
 
 export const DEVICE_ID = "deviceId"
 export const SECRET_SEED = "secretSeed"

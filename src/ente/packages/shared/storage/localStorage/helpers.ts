@@ -1,7 +1,9 @@
-import { LS_KEYS, getData, setData } from ".";
+import { getData, LS_KEYS, setData } from ".";
+import { getFromCache, USER } from "../../../../../cache";
 
-export const getToken = (): string => {
-    const token = getData(LS_KEYS.USER)?.token;
+export const getToken = async (): Promise<string> => {
+    const token = await (await getFromCache(USER)).token // getData(LS_KEYS.USER)?.token;
+    console.log("getToken: token", token)
     return token;
 };
 

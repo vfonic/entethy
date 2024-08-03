@@ -12,9 +12,9 @@ import {
   SECRET_SEED,
   SERVICES_KEY,
   SRP_ATTRIBUTES,
-  USER,
 } from "../../cache"
 import { getAuthyApps, getServices, getSRPAttributes } from "../../client/ente-auth-client"
+import { getAuthCodes } from "../../ente/apps/auth/src/services/remote"
 import { generateTOTP } from "../../util/totp"
 import { mapOtpServices } from "../../util/utils"
 import * as libsodium from "./libsodium"
@@ -35,12 +35,12 @@ export interface Service {
 const { enteEmail, entePassword } = getPreferenceValues<{ enteEmail: string; entePassword: string }>()
 
 // SRP - Secure Remote Password
-export async function login() {
+export async function login(setOtpList: React.Dispatch<React.SetStateAction<Service[]>>) {
   try {
     const hasSrpData = await checkIfCached(SRP_ATTRIBUTES)
     let srpAttributes = null
     if (!hasSrpData) {
-      await addToCache(USER, { email: enteEmail })
+      // await addToCache(USER, { email: enteEmail })
       srpAttributes = await getSRPAttributes(enteEmail)
       await addToCache(SRP_ATTRIBUTES, srpAttributes)
     } else {
@@ -48,15 +48,34 @@ export async function login() {
     }
 
     await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Deriving Key Encryption Key" })
+    console.log("login: kek")
     const kek = await libsodium.deriveKey(entePassword, srpAttributes.kekSalt, srpAttributes.opsLimit, srpAttributes.memLimit)
+    console.log("login: kek", kek)
 
-    const keyAttributes = await getKeyAttributes(kek, srpAttributes)
+    console.log("login: getKeyAttributes")
+    const keyAttributes = await getKeyAttributes(kek, srpAttributes, enteEmail)
+    console.log("login: getKeyAttributes", keyAttributes)
     if (!keyAttributes) throw new Error("KeyAttributes not found")
 
     await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Decrypting encrypted key" })
+    console.log("login: decryptB64")
     const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
-    console.log({ key, kek, keyAttributes, entePassword })
-    useMasterPassword(key, kek, keyAttributes, entePassword)
+    // console.log({ key, kek, keyAttributes, entePassword })
+    await useMasterPassword(key, kek, keyAttributes, entePassword)
+    const authCodes = await getAuthCodes()
+    setOtpList(
+      authCodes.map(code => ({
+        id: code.id,
+        period: code.period,
+        digits: code.length,
+        issuer: code.issuer,
+        accountType: code.type,
+        name: code.account,
+        seed: code.secret,
+        // logo?: string
+        type: "service",
+      })),
+    )
   } catch (error) {
     if (error instanceof Error) {
       await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message })
@@ -108,6 +127,7 @@ export async function removeCachedValuesIfEnteEmailHasBeenChanged(setIsLoggedIn:
     if (enteEmail != cachedEmail) {
       await logout()
       setIsLoggedIn(false)
+      return true
     }
   }
 }

@@ -3,6 +3,7 @@ import crypto from "crypto"
 import fetch from "node-fetch"
 import os from "os"
 import { URLSearchParams } from "url"
+import { apiURL } from "../ente/packages/next/origins"
 import { ApiError, AppsResponse, Device, GetSRPAttributesResponse, RegistrationStatus, SRPAttributes, ServicesResponse } from "./dto"
 
 const baseUrl = "https://api.ente.io"
@@ -12,7 +13,8 @@ const SIGNATURE = crypto.randomBytes(32).toString("hex")
 
 export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
   await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting SRP attributes" })
-  const response = await fetch(`https://api.ente.io/users/srp/attributes?email=${encodeURIComponent(email)}`)
+  console.log("fetch", `${await apiURL("/users/srp/attributes")}?email=${encodeURIComponent(email)}`)
+  const response = await fetch(`${await apiURL("/users/srp/attributes")}?email=${encodeURIComponent(email)}`)
 
   if (response.ok) {
     return ((await response.json()) as GetSRPAttributesResponse).attributes as SRPAttributes
