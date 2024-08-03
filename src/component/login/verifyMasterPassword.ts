@@ -16,13 +16,13 @@ import { SESSION_KEYS } from "../../ente/packages/shared/storage/sessionStorage"
 import { KeyAttributes } from "../../ente/packages/shared/user/types"
 import * as libsodium from "./libsodium"
 
-export const getKeyAttributes = async (kek: string, srpAttributes: any, email: string) => {
+export const getKeyAttributes = async (kek: string, srpAttributes: any) => {
   await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting key attributes" })
   try {
     const { keyAttributes, encryptedToken, token, id, twoFactorSessionID, passkeySessionID } = await loginViaSRP(srpAttributes, kek)
-    // const user = (await getFromCache(USER)) as object
+    const user = (await getFromCache(USER)) as object
     await addToCache(USER, {
-      email,
+      ...user,
       token,
       encryptedToken,
       id,

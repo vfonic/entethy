@@ -40,7 +40,7 @@ export const configureSRP = async ({
         const srpA = convertBufferToBase64(srpClient.computeA());
 
         log.debug(() => `srp a: ${srpA}`);
-        const token = getToken();
+        const token = await getToken();
         const { setupID, srpB } = await startSRPSetup(token, {
             srpA,
             srpUserID,

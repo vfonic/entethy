@@ -118,7 +118,7 @@ export const getDiff = async (
                 },
             },
         );
-        return (await resp.json()).diff;
+        return (await resp.json() as { diff: AuthEntity[] }).diff;
     } catch (e) {
         console.error("Get diff failed", e);
         throw e;

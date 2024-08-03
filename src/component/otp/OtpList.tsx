@@ -4,10 +4,10 @@ import OtpListItems from "./OtpListItems"
 import { commonActions, refresh } from "./otp-helpers"
 
 export function OtpList() {
-  const { isLoggedIn, setIsLoggedIn, otpList, setOtpList } = useEnteContext()
+  const { otpList, setOtpList } = useEnteContext()
 
   return (
-    <List searchBarPlaceholder="Search" isLoading={!isLoggedIn || otpList.isLoading}>
+    <List searchBarPlaceholder="Search" isLoading={otpList.isLoading}>
       {otpList.services.length == 0 ? (
         <List.EmptyView
           icon={Icon.SpeechBubbleImportant}

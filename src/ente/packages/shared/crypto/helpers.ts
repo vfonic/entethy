@@ -148,7 +148,7 @@ async function createNewRecoveryKey() {
         recoveryKeyEncryptedWithMasterKey: encryptedRecoveryKey.encryptedData,
         recoveryKeyDecryptionNonce: encryptedRecoveryKey.nonce,
     };
-    await setRecoveryKey(getToken(), recoveryKeyAttributes);
+    await setRecoveryKey(await getToken(), recoveryKeyAttributes);
 
     const updatedKeyAttributes = Object.assign(
         existingAttributes,
