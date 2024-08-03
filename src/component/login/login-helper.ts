@@ -55,24 +55,28 @@ export async function login(setOtpList: React.Dispatch<React.SetStateAction<{ se
     const keyAttributes = await getKeyAttributes(kek, srpAttributes)
     if (!keyAttributes) throw new Error("KeyAttributes not found")
 
-    await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Decrypting encrypted key" })
+    const toast = await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Decrypting encrypted key" })
     const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
     await useMasterPassword(key, kek, keyAttributes, entePassword)
     const authCodes = await getAuthCodes()
+
+    const otpServices: Service[] = authCodes.map(code => ({
+      id: code.id,
+      period: code.period,
+      digits: code.length,
+      issuer: code.issuer,
+      accountType: code.type,
+      name: code.account,
+      seed: code.secret,
+      // logo?: string
+      type: "service",
+    }))
     setOtpList({
-      services: authCodes.map(code => ({
-        id: code.id,
-        period: code.period,
-        digits: code.length,
-        issuer: code.issuer,
-        accountType: code.type,
-        name: code.account,
-        seed: code.secret,
-        // logo?: string
-        type: "service",
-      })),
+      services: otpServices,
       isLoading: false,
     })
+    await addToCache(OTP_SERVICES_KEY, otpServices)
+    toast.hide()
   } catch (error) {
     if (error instanceof Error) {
       await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message })

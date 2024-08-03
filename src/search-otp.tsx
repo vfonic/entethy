@@ -1,9 +1,9 @@
-import { Detail, getPreferenceValues } from "@raycast/api"
+import { getPreferenceValues } from "@raycast/api"
 import { createContext, useContext, useEffect, useReducer, useState } from "react"
 import { addToCache, APPS_KEY, checkIfCached, ENTE_EMAIL, getFromCache, OTP_SERVICES_KEY, SERVICES_KEY } from "./cache"
 import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "./client/dto"
 import { login, logout, removeCachedValuesIfEnteEmailHasBeenChanged, Service } from "./component/login/login-helper"
-import { checkAtLeastOneValidOtp } from "./component/otp/otp-helpers"
+import { checkAtLeastOneValidOtp, loadData } from "./component/otp/otp-helpers"
 import { OtpList } from "./component/otp/OtpList"
 import { mapOtpServices } from "./util/utils"
 
@@ -24,7 +24,6 @@ const EMAIL_CHECK = "email-check"
 const CACHE_CHECK = "cache-check"
 const LOADING_DATA = "loading-data"
 const READY = "ready"
-const ALLOWED_RENDERING_STATES = [READY]
 
 const EMAIL_CHECK_SUCCESS = "email-check-success"
 const CACHE_CHECK_SUCCESS = "cache-check-success"
@@ -42,17 +41,17 @@ const appReducer = (state: AppState, action: any) => {
 
 export default function SearchOtp() {
   const [appState, dispatch] = useReducer(appReducer, EMAIL_CHECK)
-  const [otpList, setOtpList] = useState<{ services: Service[]; isLoading: boolean }>({ services: [], isLoading: false })
+  const [otpList, setOtpList] = useState<{ services: Service[]; isLoading: boolean }>({ services: [], isLoading: true })
 
   useEffect(() => {
     const checkEmailUnchanged = async () => {
       if (appState !== EMAIL_CHECK) return
 
       const isEnteEmailChanged = await removeCachedValuesIfEnteEmailHasBeenChanged()
+      const { enteEmail } = getPreferenceValues<{ enteEmail: string }>()
+      await addToCache(ENTE_EMAIL, enteEmail)
       if (isEnteEmailChanged) {
         logout()
-        const { enteEmail } = getPreferenceValues<{ enteEmail: string }>()
-        await addToCache(ENTE_EMAIL, enteEmail)
         return
       }
       dispatch({ type: EMAIL_CHECK_SUCCESS })
@@ -65,6 +64,7 @@ export default function SearchOtp() {
       if (appState !== CACHE_CHECK) return
 
       if (await checkIfCached(OTP_SERVICES_KEY)) {
+        await loadData(setOtpList)
         dispatch({ type: CACHE_CHECK_SUCCESS })
         return
       }
@@ -100,9 +100,6 @@ export default function SearchOtp() {
     checkDataInCache()
   }, [appState])
 
-  if (!ALLOWED_RENDERING_STATES.includes(appState)) {
-    return <Detail markdown="Fetching auth data..." actions={<></>} />
-  }
   return (
     <EnteContext.Provider value={{ otpList, setOtpList }}>
       <OtpList />

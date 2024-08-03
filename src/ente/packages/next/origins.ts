@@ -19,9 +19,7 @@ export const apiOrigin = async () => "https://api.ente.io";
  *
  * @returns path prefixed by {@link apiOrigin}.
  */
-export const apiURL = async (path: string) => {
-    console.log('apiURL', path)
-    return(await apiOrigin()) + path};
+export const apiURL = async (path: string) => (await apiOrigin()) + path;
 
 /**
  * Return the origin that should be used for uploading files.
