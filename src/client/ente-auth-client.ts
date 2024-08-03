@@ -13,7 +13,6 @@ const SIGNATURE = crypto.randomBytes(32).toString("hex")
 
 export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
   await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Getting SRP attributes" })
-  console.log("fetch", `${await apiURL("/users/srp/attributes")}?email=${encodeURIComponent(email)}`)
   const response = await fetch(`${await apiURL("/users/srp/attributes")}?email=${encodeURIComponent(email)}`)
 
   if (response.ok) {

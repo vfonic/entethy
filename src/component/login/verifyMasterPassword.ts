@@ -37,15 +37,12 @@ export const getKeyAttributes = async (kek: string, srpAttributes: any) => {
 }
 
 export const useMasterPassword = async (key: string, kek: string, keyAttributes: any, passphrase: string) => {
-  console.log("useMasterPassword")
   try {
     if (isFirstLogin() && passphrase) {
       const intermediateKeyAttributes = await generateIntermediateKeyAttributes(passphrase, keyAttributes, key)
       await addToCache(KEY_ATTRIBUTES, intermediateKeyAttributes)
-      // console.log({ key, kek, keyAttributes, passphrase })
     }
     const sessionKeyAttributes = await generateSessionKey(key)
-    console.log("useMasterPassword: generateSessionKey", sessionKeyAttributes)
     await addToCache(SESSION_KEYS.ENCRYPTION_KEY, sessionKeyAttributes)
 
     const user = (await getFromCache(USER)) as { email: string }
@@ -69,10 +66,6 @@ export const useMasterPassword = async (key: string, kek: string, keyAttributes:
     } catch (e) {
       log.error("migrate to srp failed", e)
     }
-    console.log("Vraćamo se kući")
-    // const redirectURL = InMemoryStore.get(MS_KEYS.REDIRECT_URL)
-    // InMemoryStore.delete(MS_KEYS.REDIRECT_URL)
-    // router.push(redirectURL ?? appHomeRoute)
   } catch (e) {
     log.error("useMasterPassword failed", e)
   }

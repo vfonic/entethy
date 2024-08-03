@@ -10,13 +10,9 @@ import { codeFromURIString, type Code } from "./code";
 // import ComlinkCryptoWorker from "../../../../packages/shared/crypto";
 
 export const getAuthCodes = async (): Promise<Code[]> => {
-    console.log("getAuthCodes")
     const masterKey = await getActualKey();
-    console.log("getAuthCodes: masterKey", masterKey)
     try {
         const authKeyData = await getAuthKey();
-        console.log("getAuthCodes: authKeyData", authKeyData)
-        // const cryptoWorker = await ComlinkCryptoWorker.getInstance();
         const authenticatorKey = await libsodium.decryptB64(
             authKeyData.encryptedKey,
             authKeyData.header,
@@ -24,7 +20,6 @@ export const getAuthCodes = async (): Promise<Code[]> => {
         );
         // always fetch all data from server for now
         const authEntity: AuthEntity[] = await getDiff(0);
-        console.log("getAuthCodes: authEntity", authEntity)
         const authCodes = await Promise.all(
             authEntity
                 .filter((f) => !f.isDeleted)
@@ -46,9 +41,7 @@ export const getAuthCodes = async (): Promise<Code[]> => {
                     }
                 }),
         );
-        console.log("getAuthCodes: authCodes", authCodes)
         const filteredAuthCodes = authCodes.filter((f) => f !== undefined);
-        console.log("getAuthCodes: filteredAuthCodes", filteredAuthCodes)
         filteredAuthCodes.sort((a, b) => {
             if (a.issuer && b.issuer) {
                 return a.issuer.localeCompare(b.issuer);
@@ -61,7 +54,6 @@ export const getAuthCodes = async (): Promise<Code[]> => {
             }
             return 0;
         });
-        console.log("getAuthCodes: filteredAuthCodes", filteredAuthCodes)
         return filteredAuthCodes;
     } catch (e) {
         if (e instanceof Error && e.message != CustomError.AUTH_KEY_NOT_FOUND) {

@@ -2,8 +2,7 @@ import { getData, LS_KEYS, setData } from ".";
 import { getFromCache, USER } from "../../../../../cache";
 
 export const getToken = async (): Promise<string> => {
-    const token = (await getFromCache(USER) as { token: string }).token // getData(LS_KEYS.USER)?.token;
-    console.log("getToken: token", token)
+    const token = (await getFromCache(USER) as { token: string }).token
     return token;
 };
 

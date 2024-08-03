@@ -50,19 +50,13 @@ export async function login(setOtpList: React.Dispatch<React.SetStateAction<{ se
     }
 
     await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Deriving Key Encryption Key" })
-    console.log("login: kek")
     const kek = await libsodium.deriveKey(entePassword, srpAttributes.kekSalt, srpAttributes.opsLimit, srpAttributes.memLimit)
-    console.log("login: kek", kek)
 
-    console.log("login: getKeyAttributes")
     const keyAttributes = await getKeyAttributes(kek, srpAttributes)
-    console.log("login: getKeyAttributes", keyAttributes)
     if (!keyAttributes) throw new Error("KeyAttributes not found")
 
     await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Decrypting encrypted key" })
-    console.log("login: decryptB64")
     const key = await libsodium.decryptB64(keyAttributes.encryptedKey, keyAttributes.keyDecryptionNonce, kek)
-    // console.log({ key, kek, keyAttributes, entePassword })
     await useMasterPassword(key, kek, keyAttributes, entePassword)
     const authCodes = await getAuthCodes()
     setOtpList({
