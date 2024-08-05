@@ -26,8 +26,6 @@ export enum LS_KEYS {
 export const setData = (key: LS_KEYS, value: object) =>
     localStorage.setItem(key, JSON.stringify(value));
 
-export const removeData = (key: LS_KEYS) => localStorage.removeItem(key);
-
 export const getData = (key: LS_KEYS) => {
     try {
         if (
@@ -43,15 +41,4 @@ export const getData = (key: LS_KEYS) => {
     } catch (e) {
         log.error(`Failed to Parse JSON for key ${key}`, e);
     }
-};
-
-export const clearData = () => localStorage.clear();
-
-// TODO: Migrate this to `local-user.ts`, with (a) more precise optionality
-// indication of the constituent fields, (b) moving any fields that need to be
-// accessed from web workers to KV DB.
-//
-// Creating a new function here to act as a funnel point.
-export const setLSUser = async (user: object) => {
-    setData(LS_KEYS.USER, user);
 };

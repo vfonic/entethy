@@ -6,9 +6,7 @@ import { SESSION_KEYS } from "../../shared/storage/sessionStorage";
 
 export const getActualKey = async () => {
     try {
-        const encryptionKeyAttributes: B64EncryptionResult = await getFromCache( // getKey(
-            SESSION_KEYS.ENCRYPTION_KEY,
-        );
+        const encryptionKeyAttributes: B64EncryptionResult = await getFromCache(SESSION_KEYS.ENCRYPTION_KEY);
 
         const key = await libsodium.decryptB64(
             encryptionKeyAttributes.encryptedData,

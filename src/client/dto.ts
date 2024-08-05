@@ -19,15 +19,6 @@ export interface GetSRPAttributesResponse {
   attributes: SRPAttributes
 }
 
-export interface RegistrationStatus {
-  message: {
-    request_status: string
-  }
-  status: string
-  pin: string
-  success: boolean
-}
-
 export interface Device {
   device: {
     id: number
