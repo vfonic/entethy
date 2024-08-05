@@ -1,10 +1,9 @@
 import { Toast, showToast } from "@raycast/api"
 import crypto from "crypto"
 import fetch from "node-fetch"
-import os from "os"
 import { URLSearchParams } from "url"
 import { apiURL } from "../ente/packages/next/origins"
-import { ApiError, AppsResponse, Device, GetSRPAttributesResponse, RegistrationStatus, SRPAttributes, ServicesResponse } from "./dto"
+import { ApiError, AppsResponse, GetSRPAttributesResponse, SRPAttributes, ServicesResponse } from "./dto"
 
 const baseUrl = "https://api.ente.io"
 // extracted from chrome plugin
@@ -22,40 +21,6 @@ export async function getSRPAttributes(email: string): Promise<SRPAttributes> {
   }
 }
 
-export async function checkRequestStatus(enteEmail: string, requestId: string): Promise<RegistrationStatus> {
-  const formData = new URLSearchParams()
-  formData.set("api_key", API_KEY)
-  formData.set("signature", SIGNATURE)
-  formData.set("locale", "en-GB")
-  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/registration/${requestId}/status?` + formData, {
-    method: "GET",
-  })
-  if (resp.ok) {
-    return (await resp.json()) as RegistrationStatus
-  } else {
-    const apiError = (await resp.json()) as ApiError
-    throw new Error(apiError.message)
-  }
-}
-
-export async function completeRegistration(enteEmail: string, pin: string): Promise<Device> {
-  const formData = new URLSearchParams()
-  formData.set("pin", pin)
-  formData.set("api_key", API_KEY)
-  formData.set("signature", SIGNATURE)
-  formData.set("device_app", "Raycast Authy Extension")
-  formData.set("device_name", `Raycast Authy Extension on ${os.hostname()}`)
-  const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/registration/complete`, {
-    method: "POST",
-    body: formData,
-  })
-  if (resp.ok) {
-    return (await resp.json()) as Device
-  } else {
-    throw new Error(((await resp.json()) as ApiError).message)
-  }
-}
-
 export async function getAuthyApps(enteEmail: string, deviceId: number, otps: string[]): Promise<AppsResponse> {
   const formData = new URLSearchParams()
   formData.set("api_key", API_KEY)
@@ -67,7 +32,7 @@ export async function getAuthyApps(enteEmail: string, deviceId: number, otps: st
   formData.set("otp3", `${otps[2]}`)
   const resp = await fetch(`${baseUrl}/users/${enteEmail}/devices/${deviceId}/apps/sync`, {
     method: "POST",
-    body: formData,
+    body: formData.toString(),
   })
   if (resp.ok) {
     return (await resp.json()) as AppsResponse

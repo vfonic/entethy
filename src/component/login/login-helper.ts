@@ -123,7 +123,7 @@ export async function logout() {
   await removeFromCache(SESSION_KEYS.KEY_ENCRYPTION_KEY)
 }
 
-export async function removeCachedValuesIfEnteEmailHasBeenChanged() {
+export async function isEmailChanged() {
   const isEmailCached = await checkIfCached(ENTE_EMAIL)
   if (isEmailCached) {
     const cachedEmail = await getFromCache<string>(ENTE_EMAIL)

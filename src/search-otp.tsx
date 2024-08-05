@@ -2,7 +2,7 @@ import { getPreferenceValues } from "@raycast/api"
 import { createContext, useContext, useEffect, useReducer, useState } from "react"
 import { addToCache, APPS_KEY, checkIfCached, ENTE_EMAIL, getFromCache, OTP_SERVICES_KEY, SERVICES_KEY } from "./cache"
 import { AppEntry, AppsResponse, AuthenticatorToken, ServicesResponse } from "./client/dto"
-import { login, logout, removeCachedValuesIfEnteEmailHasBeenChanged, Service } from "./component/login/login-helper"
+import { isEmailChanged, login, logout, Service } from "./component/login/login-helper"
 import { checkAtLeastOneValidOtp, loadData } from "./component/otp/otp-helpers"
 import { OtpList } from "./component/otp/OtpList"
 import { mapOtpServices } from "./util/utils"
@@ -47,7 +47,7 @@ export default function SearchOtp() {
     const checkEmailUnchanged = async () => {
       if (appState !== EMAIL_CHECK) return
 
-      const isEnteEmailChanged = await removeCachedValuesIfEnteEmailHasBeenChanged()
+      const isEnteEmailChanged = await isEmailChanged()
       const { enteEmail } = getPreferenceValues<{ enteEmail: string }>()
       await addToCache(ENTE_EMAIL, enteEmail)
       if (isEnteEmailChanged) {
