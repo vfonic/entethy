@@ -1,9 +1,8 @@
-import { Action, confirmAlert, getPreferenceValues, Icon, openCommandPreferences, popToRoot, showToast, Toast } from "@raycast/api"
+import { Action, confirmAlert, getPreferenceValues, Icon, openCommandPreferences, popToRoot } from "@raycast/api"
 import { addToCache, checkIfCached, getFromCache, OTP_SERVICES_KEY, RECENTLY_USED } from "../../cache"
-import { getAuthCodes } from "../../ente/apps/auth/src/services/remote"
 import { compareByDate, compareByName, toId } from "../../util/compare"
 import Export from "../export/Export"
-import { logout, Service } from "../login/login-helper"
+import { login, logout, Service } from "../login/login-helper"
 
 const {
   excludeNames: excludeNamesCsv = "",
@@ -61,33 +60,8 @@ export async function checkAtLeastOneValidOtp(services: Service[]) {
  * Function to update a list of services
  */
 export async function refresh(setOtpList: SetOtpList) {
-  await showToast({ style: Toast.Style.Animated, title: "Ente Auth", message: "Refreshing" })
   setOtpList(prevState => ({ services: prevState.services, isLoading: true }))
-  let services: Service[] = []
-  try {
-    const authCodes = await getAuthCodes()
-    services = authCodes.map(code => ({
-      id: code.id,
-      period: code.period,
-      digits: code.length,
-      issuer: code.issuer,
-      accountType: code.type,
-      name: code.account,
-      seed: code.secret,
-      type: "service" as const,
-    }))
-    await addToCache(OTP_SERVICES_KEY, services)
-  } catch (error) {
-    if (error instanceof Error) {
-      await showToast({ style: Toast.Style.Failure, title: "Ente Auth", message: error.message })
-      return
-    } else {
-      throw error
-    }
-  }
-  services = await sortServices(services)
-  setOtpList({ services, isLoading: false })
-  await showToast({ style: Toast.Style.Success, title: "Ente Auth", message: "Data has been synced" })
+  await login(setOtpList)
 }
 
 /**
